@@ -8,42 +8,15 @@
     body {
       margin: 0;
       padding: 0;
-      background-color: black;
+      background-color: rgb(0, 0, 0);
       overflow: hidden;
       display: flex;
-      justify-content: center;
-    }
-    #game-container {
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-    }
-    #hud {
-      color: white;
-      font-family: monospace;
-      font-size: 20px;
-      padding: 20px;
-      min-width: 200px;
-      order: 2;
-    }
-    canvas {
-      image-rendering: pixelated;
     }
   </style>
 </head>
 <body>
-  <div id="game-container">
-    <canvas></canvas>
-    <div id="hud">
-      <div id="score">000000</div>
-      <div id="speed">000 km/h</div>
-      <div>FUEL</div>
-      <div id="fuel">100</div>
-    </div>
      <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
      <script src="scenes/GameScene.js"></script>
      <script src="main.js"></script>
-
-  </div>
 </body>
 </html>

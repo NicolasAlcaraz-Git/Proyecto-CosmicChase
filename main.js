@@ -1,8 +1,19 @@
 const config = {
   type: Phaser.AUTO,
-  width: 400,
+  width: 800,
   height: 600,
-  parent: 'game-container',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    min: {
+      width: 16,
+      height: 9,
+    },
+    max: {
+      width: 1920,
+      height:  1080,
+    },
+  },
   physics: {
     default: 'arcade',
     arcade: {
