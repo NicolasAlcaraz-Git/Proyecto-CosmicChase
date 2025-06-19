@@ -27,14 +27,17 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // configuración de la escena
     this.road = this.add.tileSprite(this.cameras.main.width / 2, this.cameras.main.height / 2, 400, 600, "road");
 
+    // variables del juego
     this.maxSpeedNormal = 400;
     this.fuelDrainNormal = 0.03;
     this.playerSpeed = 0;
     this.fuel = 100;
     this.score = 0;
 
+    // variables de misiles
     this.maxMissiles = 6;
     this.missilesAvailable = this.maxMissiles;
     this.missileText = this.add.text(650, 130, 'MISSILES\n6', {
@@ -51,11 +54,11 @@ class GameScene extends Phaser.Scene {
     this.fuelItems = this.physics.add.group();
     this.missileCrates = this.physics.add.group();
 
+    // aparicion y escala del jugador
     this.player = this.physics.add.sprite(400, 500, "player");
     this.player.setCollideWorldBounds(true);
     this.player.setScale(1);
     this.enablePlayerControl = false;
-
     this.keys = this.input.keyboard.addKeys('Z,X,C');
     this.cursors = this.input.keyboard.createCursorKeys();
     this.bullets = this.physics.add.group();
@@ -71,14 +74,17 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.explosions, this.enemiesGroup, this.hitByExplosion, null, this);
     this.physics.add.overlap(this.player, this.fuelItems, this.collectFuel, null, this);
     this.physics.add.overlap(this.player, this.missileCrates, this.collectMissileCrate, null, this);
-    this.physics.add.collider(this.enemiesGroup, this.enemiesGroup);
+    //this.physics.add.collider(this.enemiesGroup, this.enemiesGroup);
 
+    // proporciones del mundo
     this.physics.world.setBounds(200, 0, this.scale.width / 2, this.scale.height);
 
+    // tiempo de inicio
     this.time.delayedCall(500, () => {
       this.enablePlayerControl = true;
     });
 
+    // tiempo para aparicion de objeto combustible
     this.time.addEvent({
       delay: 15000,
       callback: this.spawnFuelItem,
@@ -86,6 +92,7 @@ class GameScene extends Phaser.Scene {
       loop: true
     });
 
+    // tiempo para aparicion de objeto caja de misil
     this.time.addEvent({
       delay: 20000,
       callback: this.spawnMissileCrate,
@@ -94,11 +101,15 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+ // ¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡ ACA EMPIEZA EL UPDATE !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   update() {
+    // velocidad del fondo respecto al jugador
     this.road.tilePositionY -= this.playerSpeed * 0.07;
 
     if (!this.enablePlayerControl) return;
 
+    // velocidad de movimiento de las flechas
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-400);
     } else if (this.cursors.right.isDown) {
@@ -107,6 +118,7 @@ class GameScene extends Phaser.Scene {
       this.player.setVelocityX(0);
     }
 
+    // velocidad de desaleceracion
     if (this.keys.Z.isDown) {
       this.playerSpeed = Math.min(this.playerSpeed + 2, this.maxSpeedNormal);
       this.fuel -= this.fuelDrainNormal;
@@ -114,14 +126,17 @@ class GameScene extends Phaser.Scene {
       this.playerSpeed *= 0.99;
     }
 
+    // presionando X dispara normal
     if (Phaser.Input.Keyboard.JustDown(this.keys.X)) {
       this.shootBullet();
     }
 
+    // presionando C dispara misiles
     if (Phaser.Input.Keyboard.JustDown(this.keys.C)) {
       this.shootMissile();
     }
 
+    // actualizacion de valored del HUD
     this.score += this.playerSpeed * 0.00;
     this.speedText.setText(`${Math.floor(this.playerSpeed)} km/h`);
     this.fuelText.setText(`FUEL\n${Math.floor(this.fuel)}`);
@@ -130,8 +145,9 @@ class GameScene extends Phaser.Scene {
     const cargos = this.enemiesGroup.getChildren().filter(e => e.getData('type') === 'cargo');
     const hunters = this.enemiesGroup.getChildren().filter(e => e.getData('type') === 'hunter');
 
+    // aparicion de enemigos a partir de 200 km, maximo 5 cargueros y 3 cazadores
     if (this.playerSpeed > 200) {
-      if (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + 3000) {
+      if (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + 2500) {
         if (cargos.length < 5 || hunters.length < 3) {
           this.spawnRandomEnemy();
           this.lastEnemyTime = this.time.now;
@@ -139,6 +155,7 @@ class GameScene extends Phaser.Scene {
       }
     }
 
+    // ver que es esto
     this.bombs.children.iterate(b => {
       if (b && b.y > 600) b.destroy();
     });
@@ -155,10 +172,12 @@ class GameScene extends Phaser.Scene {
       if (crate && crate.y > this.scale.height + 20) crate.destroy();
     });
 
+    // se reinicia el juego al terminarse el combustible
     if (this.fuel <= 0) {
       this.scene.restart();
     }
 
+    // ver que es esto
     this.enemiesGroup.children.iterate(enemy => {
       if (!enemy.active) return;
 
@@ -176,6 +195,7 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  // velocidad de mis balas normales
   shootBullet() {
     const bullet = this.bullets.create(this.player.x, this.player.y - 20, 'bullet');
     bullet.setVelocityY(-900);
@@ -187,13 +207,14 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  // no se pueden disparar misiles si tiene 0
   shootMissile() {
     if (this.missilesAvailable <= 0) return;
 
-    const missile = this.missiles.create(this.player.x, this.player.y - 20, 'bullet'); // mismo sprite que bullet si no tenés otro
-    missile.setVelocityY(-400);
-    missile.setDisplaySize(20, 40);
-    missile.setCollideWorldBounds(true);
+    const missile = this.missiles.create(this.player.x, this.player.y - 20, 'bullet'); // despues tengo que cambiar el sprite del misil aca
+    missile.setVelocityY(-600);                                                        // velocidad del misil, mas lento al ser mas pesado
+    missile.setDisplaySize(20, 40);                                                    // tamaño del sprite
+    missile.setCollideWorldBounds(true);                                               // colisiona con el borde del mapa
     missile.body.onWorldBounds = true;
 
     this.missilesAvailable--;
@@ -207,10 +228,12 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  // texto del HUD para misiles
   updateMissileText() {
     this.missileText.setText(`MISSILES\n${this.missilesAvailable}`);
   }
 
+  // codigo para la aparicion de caja de misiles
   spawnMissileCrate() {
     const minX = 200 + 30;
     const maxX = 200 + this.scale.width / 2 - 30;
@@ -219,25 +242,28 @@ class GameScene extends Phaser.Scene {
     if (this.missileCrates.getChildren().length >= 2) return;
 
     const crate = this.missileCrates.create(x, -20, "caja");
-    crate.setVelocityY(200);
-    crate.setDisplaySize(32, 32);
+    crate.setVelocityY(200);                                         // velocidad de caida
+    crate.setDisplaySize(32, 32);                                    // tamaño del sprite
   }
 
+  // codigo para recolectar el item de caja de misiles
   collectMissileCrate(player, crate) {
     crate.destroy();
     this.missilesAvailable = this.maxMissiles;
     this.updateMissileText();
   }
 
+  // codigo para la explosion
   spawnExplosion(x, y) {
     const explosion = this.explosions.create(x, y, "explosion");
-    explosion.setDisplaySize(60, 60);
+    explosion.setDisplaySize(60, 60);                                // tamaño del sprite
     explosion.setAlpha(0.8);
-    this.time.delayedCall(2000, () => {
+    this.time.delayedCall(2000, () => {                              // tiempo que permanece en pantalla
       explosion.destroy();
     });
   }
 
+  // codigo para aparicion aleatoria de enemigos en general 
   spawnRandomEnemy() {
     const x = Phaser.Math.Between(232, 340);
     const type = Phaser.Math.Between(0, 1) === 0 ? "cargo" : "hunter";
@@ -247,24 +273,26 @@ class GameScene extends Phaser.Scene {
         this.spawnCargoEnemy(x, -60);
       }
     } else {
-      if (this.enemiesGroup.getChildren().filter(e => e.getData("type") === "hunter").length < 5) {
+      if (this.enemiesGroup.getChildren().filter(e => e.getData("type") === "hunter").length < 3) {
         this.spawnHunterEnemy(x, -60);
       }
     }
   }
 
+  // codigo para los cargueros
   spawnCargoEnemy(x, y) {
     const carguero = this.enemiesGroup.create(x, y, "enemy1_0");
-    carguero.setVelocityY(220);
+    carguero.setVelocityY(250);                                      // posicion en pantalla de la nave
     carguero.setData("type", "cargo");
-    carguero.setData("life", 5);
-    carguero.setScale(0.9);
+    carguero.setData("life", 5);                                     // 5 disparos hasta matarlo
+    carguero.setScale(1);                                            // tamaño del sprite
 
     this.time.delayedCall(1000, () => {
       if (!carguero.active) return;
       carguero.setVelocityY(0);
+      carguero.body.moves = false;
       carguero.bombTimer = this.time.addEvent({
-        delay: 4000,
+        delay: 2500,                                                 // cada cuantos segundos dispara la nave
         callback: () => {
           if (!carguero.active) return;
           const bomb = this.bombs.create(carguero.x, carguero.y + 40, "bomb");
@@ -278,16 +306,18 @@ class GameScene extends Phaser.Scene {
 
   spawnHunterEnemy(x, y) {
     const cazador = this.enemiesGroup.create(x, y, "enemy2_0");
-    cazador.setVelocityY(140);
+    cazador.setVelocityY(140);                                      // posicion en pantalla de la nave
     cazador.setData("type", "hunter");
-    cazador.setData("life", 7);
-    cazador.setScale(1.2);
+    cazador.setData("life", 7);                                     // 7 disparos hasta matarlo
+    cazador.setScale(1.3);                                          // tamaño del sprite
 
     this.time.delayedCall(1000, () => {
       if (!cazador.active) return;
       cazador.setVelocityY(0);
+      cazador.body.allowGravity = false;
+      cazador.body.immovable = true;
       cazador.laserTimer = this.time.addEvent({
-        delay: 4000,
+        delay: 2500,                                                // cada cuantos segundos dispara la nave
         callback: () => {
           if (!cazador.active) return;
           const laser = this.enemyLasers.create(cazador.x, cazador.y + 40, "laser");
@@ -299,20 +329,23 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  // codigo para la aparicion del item de combustible
   spawnFuelItem() {
     const minX = 200 + 30;
     const maxX = 200 + this.scale.width / 2 - 30;
     const x = Phaser.Math.Between(minX, maxX);
     const fuelItem = this.fuelItems.create(x, -20, "fuelItem");
-    fuelItem.setVelocityY(220);
-    fuelItem.setDisplaySize(30, 30);
+    fuelItem.setVelocityY(220);                                      // velocidad de caida del item
+    fuelItem.setDisplaySize(30, 30);                                 // tamaño del sprite
   }
 
+  // codigo para que el jugador pueda recolectarlo
   collectFuel(player, fuelItem) {
     fuelItem.destroy();
-    this.fuel = Math.min(this.fuel + 25, 100);
+    this.fuel = Math.min(this.fuel + 25, 100);                       // cantidad que recupera de combustible el jugador (25)
   }
 
+  // codigo para la destruccion de las naves despues de los disparos correspondientes
   hitEnemy(bullet, enemy) {
     bullet.destroy();
     let hp = enemy.getData("life") - 1;
@@ -324,20 +357,23 @@ class GameScene extends Phaser.Scene {
     enemy.setData("life", hp);
 
     const type = enemy.getData("type");
-    const damageStage = (type === "cargo") ? 5 - hp : 7 - hp;
+    const damageStage = (type === "cargo") ? 5 - hp : 7 - hp;                                  // 5 disparos para el carguero y 7 para el cazador
     const newTexture = type === "cargo" ? `enemy1_${damageStage}` : `enemy2_${damageStage}`;
     enemy.setTexture(newTexture);
   }
 
+  // codigo para que el misil destruya de inmediato
   hitWithMissile(missile, enemy) {
     missile.destroy();
     this.spawnExplosion(missile.x, missile.y);
   }
 
+  // codigo para que la explosion afecte a las demas naves
   hitByExplosion(explosion, enemy) {
     if (enemy.active) enemy.destroy();
   }
 
+  // codigo para reiniciar si disparan al jugador
   hitPlayer(player, projectile) {
     projectile.destroy();
     this.scene.restart();
