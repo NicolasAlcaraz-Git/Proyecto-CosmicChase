@@ -46,6 +46,10 @@ class GameScene extends Phaser.Scene {
     this.load.image("p15", "./public/aviones/avion-usa.png");
     this.load.image("p16", "./public/aviones/avion-arstotzka.png");
     this.load.image("p17", "./public/aviones/avion-farfania.png");
+    this.load.image("avion-rojo1", "./public/aviones/avion-rojo1.png");
+    this.load.image("avion-rojo2", "./public/aviones/avion-rojo2.png");
+    this.load.image("avion-power1", "./public/aviones/avion-power1.png");
+    this.load.image("avion-power2", "./public/aviones/avion-power2.png");
 
     // disparos en general
     this.load.image("bomb1", "./public/items/bomb1.png");
@@ -94,6 +98,7 @@ class GameScene extends Phaser.Scene {
 
   // ACA EMPIEZA EL CREATE
   create() {
+    this.gameIsFrozen = false; // <-- Reinicia el flag al crear la escena
     this.road = this.add.tileSprite(this.cameras.main.width / 2, this.cameras.main.height / 2, 400, 600, "road");      // DIMENSIONES DEL MAPA
 
     this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.2 });
@@ -161,6 +166,14 @@ class GameScene extends Phaser.Scene {
         this.missiles.children.each(m => toggleFrame(m, "missile1", "missile2"));
         this.bombs.children.each(b => toggleFrame(b, "bomb1", "bomb2"));
         this.enemyLasers.children.each(l => toggleFrame(l, "laser1", "laser2"));
+        toggleFrame(this.player, "avion-rojo1", "avion-rojo2");
+        // NUEVO: animar todos los aliados tipo avionPower
+        this.allyPlanes.forEach(ally => {
+          if (!ally.active) return;
+          if (ally.texture.key === "avion-power1" || ally.texture.key === "avion-power2") {
+            toggleFrame(ally, "avion-power1", "avion-power2");
+          }
+        });
       },
       callbackScope: this,
       loop: true
@@ -175,7 +188,7 @@ class GameScene extends Phaser.Scene {
     });
 
     // jugador, avion de combate
-    this.player = this.physics.add.sprite(400, 500, "player");
+    this.player = this.physics.add.sprite(400, 500, "avion-rojo1");
     this.player.setCollideWorldBounds(true);
     this.player.setScale(1);
     this.enablePlayerControl = false;
@@ -247,6 +260,7 @@ class GameScene extends Phaser.Scene {
   }
 
   update() {
+    if (this.gameIsFrozen) return;
     this.road.tilePositionY -= this.playerSpeed * 0.03;
     if (!this.enablePlayerControl) return;
     if (Phaser.Input.Keyboard.JustDown(this.testKey)) {
@@ -419,7 +433,7 @@ class GameScene extends Phaser.Scene {
     if (this.powerups.countActive(true) >= 1) return;
     const x = Phaser.Math.Between(230, 570);
     const power = this.powerups.create(x, -20, "powerup");
-    power.setVelocityY(200);
+    power.setVelocityY(280);
     power.setScale(0.2);
   }
 
@@ -434,7 +448,7 @@ class GameScene extends Phaser.Scene {
 
     const offsetX = this.allyPlanes.length === 0 ? 45 : -45;
     const offsetY = 40;
-    const ally = this.physics.add.sprite(player.x + offsetX, player.y + offsetY, "avionPower");
+    const ally = this.physics.add.sprite(player.x + offsetX, player.y + offsetY, "avion-power1");
     ally.setScale(1);
     ally.setCollideWorldBounds(true);
     ally.body.immovable = true;
@@ -603,9 +617,26 @@ class GameScene extends Phaser.Scene {
 
   hitPlayer(player, projectile) {
     projectile.destroy();
-    this.scene.start('DeathScene', {
-      score: this.score,
-      shipsDestroyed: this.shipsDestroyed
+
+    if (this.gameMusic && this.gameMusic.isPlaying) {
+      this.gameMusic.stop();
+    }
+
+    this.gameIsFrozen = true;
+
+    // Detener los timers de disparo de todos los enemigos
+    this.enemiesGroup.children.each(enemy => {
+      if (enemy.bombTimer) enemy.bombTimer.paused = true;
+      if (enemy.laserTimer) enemy.laserTimer.paused = true;
+    });
+
+    this.sfx.explodemax.play();
+
+    this.showPlayerExplosion(() => {
+      this.scene.start('DeathScene', {
+        score: this.score,
+        shipsDestroyed: this.shipsDestroyed
+      });
     });
   }
 
@@ -619,6 +650,34 @@ class GameScene extends Phaser.Scene {
   getEnemyFireDelay() {
     // Disparan más rápido con más puntos, pero nunca menos de 600ms
     return Math.max(2500 - this.score * 0.1, 600);
+  }
+
+  showPlayerExplosion(callback) {
+    // Oculta el sprite del jugador
+    this.player.setVisible(false);
+
+    // Crea la explosión grande en la posición del jugador
+    const explosion = this.add.sprite(this.player.x, this.player.y, "explode1").setScale(2.5).setAlpha(0.95);
+
+    // Animación lenta: cambia de frame cada 300ms
+    let frame = 1;
+    const maxFrames = 6;
+    const frameRate = 300;
+    const animationTimer = this.time.addEvent({
+      delay: frameRate,
+      repeat: maxFrames - 1,
+      callback: () => {
+        frame++;
+        if (frame > maxFrames) frame = maxFrames;
+        explosion.setTexture(`explode${frame}`);
+      }
+    });
+
+    // Cuando termine la animación, destruye la explosión y llama al callback
+    this.time.delayedCall(frameRate * maxFrames + 200, () => {
+      explosion.destroy();
+      if (callback) callback();
+    });
   }
 }
 export default GameScene;
