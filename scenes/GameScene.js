@@ -128,7 +128,7 @@ class GameScene extends Phaser.Scene {
     };
 
     // configuracion directa con el HUD y velocidad
-    this.maxSpeedNormal = 400;
+    this.maxSpeedNormal = 600;
     this.fuelDrainNormal = 0.03;
     this.playerSpeed = 0;
     this.fuel = 100;
@@ -247,7 +247,7 @@ class GameScene extends Phaser.Scene {
   }
 
   update() {
-    this.road.tilePositionY -= this.playerSpeed * 0.07;
+    this.road.tilePositionY -= this.playerSpeed * 0.03;
     if (!this.enablePlayerControl) return;
     if (Phaser.Input.Keyboard.JustDown(this.testKey)) {
       this.scene.start('DeathScene', {
@@ -281,7 +281,7 @@ class GameScene extends Phaser.Scene {
     this.fuelText.setText(`${Math.floor(this.fuel)}%`);
     this.scoreText.setText(this.score.toFixed(0).padStart(6, '0'));
 
-    if (this.playerSpeed > 200 && (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + 2500)) {
+    if (this.playerSpeed > 450 && (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + 2500)) {
       if (this.enemiesGroup.countActive(true) < 8) {
         this.spawnRandomEnemy();
         this.lastEnemyTime = this.time.now;
@@ -377,17 +377,14 @@ class GameScene extends Phaser.Scene {
     bullet.setVelocityY(-900);
     bullet.setScale(1.4);
   });
-
   }
 
   shootMissile() {
     if (this.missilesAvailable <= 0) return;
     this.sfx.misil.play();
     const missile = this.missiles.create(this.player.x, this.player.y - this.player.displayHeight / 2 - 10, 'missile1');
-    missile.setVelocityY(-400);
+    missile.setVelocityY(-700);
     missile.setScale(2.8);
-    //missile.setCollideWorldBounds(true);
-    //missile.body.onWorldBounds = true;
     this.missilesAvailable--;
     this.updateMissileText();
   }
@@ -400,21 +397,22 @@ class GameScene extends Phaser.Scene {
 
   // SPAWN DEL ITEM CAJA MISILES
   spawnMissileCrate() {
+    if (this.playerSpeed < 400) return; // Solo si el jugador va rápido
     if (this.missileCrates.countActive(true) >= 2) return;
     const x = Phaser.Math.Between(230, 570);
     const crate = this.missileCrates.create(x, -20, "caja");
-    crate.setVelocityY(200);
+    crate.setVelocityY(250);
     crate.setScale(1.5);
   }
 
   // SPAWN DEL ITEM COMBUSTIBLE
   spawnFuelItem() {
+    if (this.playerSpeed < 400) return; // Solo si el jugador va rápido
     const x = Phaser.Math.Between(230, 570);
     const fuel = this.fuelItems.create(x, -20, "fuelItem");
-    fuel.setVelocityY(220);
+    fuel.setVelocityY(250);
     fuel.setScale(1.5);
   }
-
 
   // codigo para recolectar powerup
   collectPowerUp(player, power) {
@@ -454,44 +452,34 @@ class GameScene extends Phaser.Scene {
   }
 
   // DURACION DE LA EXPLOSION
-  spawnExplosion(x, y) {
+  spawnExplosion(x, y, contagious = false) {
     const explosion = this.explosions.create(x, y, "explode1");
-    explosion.setScale(2.5);
+    explosion.setScale(contagious ? 2.5 : 1.2); // grande para misil, chica para bala
     explosion.setAlpha(0.9);
+    explosion.setData('contagious', contagious);
 
-    // === 🔥 ANIMACIÓN MANUAL DE LA EXPLOSIÓN ===
+    // Animación manual
     let frame = 1;
-    const frameRate = 90; // milisegundos entre frames (~12 FPS)
-    const maxFrames = 7;
+    const frameRate = 110;
+    const maxFrames = 6; // solo 1,2,3 para visual
     const animationTimer = this.time.addEvent({
       delay: frameRate,
       callback: () => {
         if (!explosion.active) return;
         frame++;
-        if (frame > maxFrames) frame = 1; // opcional: loop
+        if (frame > maxFrames) frame = 1;
         explosion.setTexture(`explode${frame}`);
       },
       loop: true
     });
 
-    // === ⏳ DURACIÓN DE LA EXPLOSIÓN ===
-    const explosionDuration = 2000; // 💬 Podés cambiar esta duración desde acá (milisegundos)
-
+    const explosionDuration = contagious ? 2000 : 600; // más corta para visual
     this.time.delayedCall(explosionDuration, () => {
       if (explosion.active) {
         explosion.destroy();
-        animationTimer.remove(); // detenemos la animación al destruir
+        animationTimer.remove();
       }
     });
-  }
-
-  // spawn de powerups
-  spawnPowerUp() {
-    if (this.powerups.countActive(true) >= 1) return;
-    const x = Phaser.Math.Between(230, 570);
-    const power = this.powerups.create(x, -20, "powerup");
-    power.setVelocityY(200);
-    power.setScale(1.5);
   }
 
   spawnRandomEnemy() {
@@ -571,6 +559,7 @@ class GameScene extends Phaser.Scene {
     if (hp <= 0) {
       this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 100);
       this.shipsDestroyed++;
+      this.spawnExplosion(enemy.x, enemy.y, false); // pequeña, NO contagiosa
       enemy.destroy();
       this.sfx.explodemini.play();
     } else {
@@ -584,7 +573,7 @@ class GameScene extends Phaser.Scene {
   hitWithMissile(missile, enemy) {
     missile.destroy();
     this.sfx.explodemax.play();
-    this.spawnExplosion(enemy.x, enemy.y);
+    this.spawnExplosion(enemy.x, enemy.y, true); // grande, contagiosa
     if (enemy.active) {
       this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 500);
       this.shipsDestroyed++;
@@ -593,9 +582,11 @@ class GameScene extends Phaser.Scene {
   }
 
   hitByExplosion(explosion, enemy) {
-    if (enemy.active) {
+    if (!enemy.active) return;
+    if (explosion.getData('contagious')) {
       this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 100);
       this.shipsDestroyed++;
+      this.spawnExplosion(enemy.x, enemy.y, false); // solo visual
       enemy.destroy();
       this.sfx.explodemini.play();
     }
