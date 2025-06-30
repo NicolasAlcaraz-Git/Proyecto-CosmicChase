@@ -6,7 +6,7 @@ export default class TitleScene extends Phaser.Scene {
 
   preload() {
     // Carga de imágenes desde /public/menus/
-    this.load.audio('menuMusic', 'public/audio/menu.music.mp3');
+    this.load.audio('menuMusic', './public/audio/menu.music.mp3');
     this.load.image('logo', 'public/menus/logo.png');
     this.load.image('alcaraz', 'public/menus/alcaraz.png');
     this.load.image('unraf', 'public/menus/unraf.png');

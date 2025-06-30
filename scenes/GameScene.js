@@ -5,7 +5,7 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio('gameMusic', 'public/audio/game.music.mp3');
+    this.load.audio('gameMusic', './public/audio/game.music.mp3');
     // sprite de jugadores
     this.load.image("player", "./public/aviones/avion-rojo.png");
     this.load.image("p2", "./public/aviones/avion-amar.png");
