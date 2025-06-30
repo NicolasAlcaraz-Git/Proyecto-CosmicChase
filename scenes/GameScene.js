@@ -461,3 +461,4 @@ class GameScene extends Phaser.Scene {
     this.allyPlanes = this.allyPlanes.filter(a => a.active); // limpiar la lista
   }
 }
+export default GameScene;
