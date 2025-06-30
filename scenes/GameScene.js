@@ -247,7 +247,7 @@ class GameScene extends Phaser.Scene {
   }
 
   update() {
-    this.road.tilePositionY -= this.playerSpeed * 0.07;          // velocidad de movimiento del fondo respecto al jugador
+    this.road.tilePositionY -= this.playerSpeed * 0.07;
     if (!this.enablePlayerControl) return;
     if (Phaser.Input.Keyboard.JustDown(this.testKey)) {
       this.scene.start('DeathScene', {
@@ -256,7 +256,7 @@ class GameScene extends Phaser.Scene {
      });
     }
 
-    // Movimiento del jugador (simplificado y funcional)
+    // Movimiento del jugador (soporta flechas y J/L)
     const moveSpeed = 300;
     let velocityX = 0;
     if (this.cursors.left.isDown || this.altKeys.left.isDown) {

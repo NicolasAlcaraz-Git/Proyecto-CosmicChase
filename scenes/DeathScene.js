@@ -61,16 +61,23 @@ export default class DeathScene extends Phaser.Scene {
     // teclas
     this.cursors = this.input.keyboard.createCursorKeys();
     this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+
+    // Teclas alternativas (I/K)
+    this.altKeys = this.input.keyboard.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.I,
+      down: Phaser.Input.Keyboard.KeyCodes.K
+    });
+
     this.inputCooldown = 0;
   }
 
   update(time) {
     if (time > this.inputCooldown) {
-      if (this.cursors.down.isDown && this.selectedOption === 0) {
+      if ((this.cursors.down.isDown || this.altKeys.down.isDown) && this.selectedOption === 0) {
         this.selectedOption = 1;
         this.updateMenu();
         this.inputCooldown = time + 150;
-      } else if (this.cursors.up.isDown && this.selectedOption === 1) {
+      } else if ((this.cursors.up.isDown || this.altKeys.up.isDown) && this.selectedOption === 1) {
         this.selectedOption = 0;
         this.updateMenu();
         this.inputCooldown = time + 150;

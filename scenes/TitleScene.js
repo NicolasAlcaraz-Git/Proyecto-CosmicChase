@@ -44,13 +44,20 @@ export default class TitleScene extends Phaser.Scene {
     this.rocket = this.add.image(centerX - 170, 420, 'rocket').setOrigin(0.5).setDisplaySize(80, 30);
 
     // Opciones
-    this.startText = this.add.image(centerX, 420, 'startBlanco').setOrigin(0.5).setDisplaySize(110, 40);
-    this.topText = this.add.image(centerX, 490, 'topGris').setOrigin(0.5).setDisplaySize(210, 40);
-
+    this.startText = this.add.image(centerX, 420, 'startBlanco').setOrigin(0.5).setDisplaySize(110, 30);
+    this.topText = this.add.image(centerX, 490, 'topGris').setOrigin(0.5).setDisplaySize(210, 30);
 
     // Entrada de teclado
     this.cursors = this.input.keyboard.createCursorKeys();
     this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+
+    // NUEVO: teclas alternativas
+    this.altKeys = this.input.keyboard.addKeys({
+      left: Phaser.Input.Keyboard.KeyCodes.J,
+      right: Phaser.Input.Keyboard.KeyCodes.L,
+      up: Phaser.Input.Keyboard.KeyCodes.I,
+      down: Phaser.Input.Keyboard.KeyCodes.K
+    });
 
     // Control de tiempo para evitar múltiples inputs rápidos
     this.inputCooldown = 0;
@@ -59,11 +66,12 @@ export default class TitleScene extends Phaser.Scene {
   update(time) {
     // Cooldown para evitar movimientos múltiples
     if (time > this.inputCooldown) {
-      if (this.cursors.down.isDown && this.selectedOption === 0) {
+      // Soporte para flechas y teclas alternativas
+      if ((this.cursors.down.isDown || this.altKeys.down.isDown) && this.selectedOption === 0) {
         this.selectedOption = 1;
         this.updateMenu();
         this.inputCooldown = time + 150;
-      } else if (this.cursors.up.isDown && this.selectedOption === 1) {
+      } else if ((this.cursors.up.isDown || this.altKeys.up.isDown) && this.selectedOption === 1) {
         this.selectedOption = 0;
         this.updateMenu();
         this.inputCooldown = time + 150;

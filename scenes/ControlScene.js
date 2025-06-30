@@ -15,6 +15,7 @@ class ControlScene extends Phaser.Scene {
     this.load.image('teclas', './public/menus/teclas.png');
     this.load.image('flechas', './public/menus/flechas.png');
     this.load.image('letras', './public/menus/letras.png');
+    this.load.image('order', './public/menus/order.png');
     this.load.image('gameblanco', './public/menus/gameblanco.png');
     this.load.image('gamegris', './public/menus/gamegris.png');
     this.load.image('backblanco', './public/menus/backblanco.png');
@@ -24,17 +25,17 @@ class ControlScene extends Phaser.Scene {
 
   create() {
     // Imagen fija superior
-    this.add.image(400, 80, 'controls').setScale(0.4);
+    this.add.image(400, 90, 'controls').setScale(0.2);
 
     // Títulos
-    this.add.image(220, 160, 'action').setScale(0.25);
-    this.add.image(570, 160, 'move').setScale(0.25);
+    this.add.image(220, 160, 'action').setScale(0.2);
+    this.add.image(570, 160, 'move').setScale(0.2);
 
     // Teclas amarillas
-    this.add.image(220, 260, 'teclas').setScale(0.45);
+    this.add.image(220, 260, 'teclas').setScale(0.65);
 
     // Imagen que alterna entre flechas y teclas (rojas)
-    this.currentAlt = this.add.image(570, 260, 'flechas').setScale(0.5);
+    this.currentAlt = this.add.image(570, 260, 'flechas').setScale(0.8);
     this.altState = true;
     this.time.addEvent({
       delay: 2000,
@@ -45,20 +46,44 @@ class ControlScene extends Phaser.Scene {
       loop: true
     });
 
+    // instrucciones
+    this.add.image(180, 370, 'order').setScale(0.17);
+
     // Opciones
-    this.gameStart = this.add.image(400, 400, 'gameblanco').setScale(0.4);
-    this.back = this.add.image(400, 470, 'backgris').setScale(0.4);
+    this.gameStart = this.add.image(400, 480, 'gameblanco').setScale(0.5);
+    this.back = this.add.image(400, 540, 'backgris').setScale(0.5);
 
     // Misil selector
-    this.selector = this.add.image(280, 400, 'rocket').setScale(0.15);
+    this.selector = this.add.image(170, 440, 'rocket').setScale(0.15);
 
     // Input
-    this.input.keyboard.on('keydown-UP', () => this.updateSelection(-1));
-    this.input.keyboard.on('keydown-DOWN', () => this.updateSelection(1));
-    this.input.keyboard.on('keydown-Z', () => this.selectOption());
-    this.input.keyboard.on('keydown-ENTER', () => this.selectOption());
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+    this.zKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+
+    this.altKeys = this.input.keyboard.addKeys({
+      left: Phaser.Input.Keyboard.KeyCodes.J,
+      right: Phaser.Input.Keyboard.KeyCodes.L,
+      up: Phaser.Input.Keyboard.KeyCodes.I,
+      down: Phaser.Input.Keyboard.KeyCodes.K
+    });
 
     this.updateSelection(0); // fuerza que se actualicen las texturas y posición del selector
+  }
+
+  update(time) {
+    if (!this.inputCooldown || time > this.inputCooldown) {
+      if ((this.cursors.down.isDown || this.altKeys.down.isDown)) {
+        this.updateSelection(1);
+        this.inputCooldown = time + 150;
+      } else if ((this.cursors.up.isDown || this.altKeys.up.isDown)) {
+        this.updateSelection(-1);
+        this.inputCooldown = time + 150;
+      } else if (Phaser.Input.Keyboard.JustDown(this.enterKey) || Phaser.Input.Keyboard.JustDown(this.zKey)) {
+        this.selectOption();
+        this.inputCooldown = time + 150;
+      }
+    }
   }
 
   updateSelection(dir) {
