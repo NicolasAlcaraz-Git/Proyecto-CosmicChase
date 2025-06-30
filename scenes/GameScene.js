@@ -304,8 +304,28 @@ class GameScene extends Phaser.Scene {
       if (!enemy.active) return;
       let dir = enemy.getData("dir") ?? (Phaser.Math.Between(0, 1) === 0 ? -1 : 1);
       enemy.setData("dir", dir);
-      enemy.x += dir * 3;
-      if (enemy.x < 232 || enemy.x > 564) enemy.setData("dir", -dir);
+
+      // Velocidad lateral progresiva, pero limitada
+      const baseSpeed = 2.5;
+      const extraSpeed = Math.min(this.score * 0.001, 5)
+      const lateralSpeed = baseSpeed + extraSpeed;
+
+      enemy.x += dir * lateralSpeed;
+
+      // Limita el movimiento lateral a la zona superior
+      if (enemy.x < 232) {
+        enemy.x = 232;
+        enemy.setData("dir", 1);
+      }
+      if (enemy.x > 564) {
+        enemy.x = 564;
+        enemy.setData("dir", -1);
+      }
+
+      // Mantén la Y fija para que no bajen
+      if (enemy.getData("fixedY")) {
+        enemy.y = enemy.getData("fixedY");
+      }
     });
 
     // Actualizar imagen del tanque de combustible
@@ -492,15 +512,17 @@ class GameScene extends Phaser.Scene {
       if (!ship.active) return;
       ship.setVelocityY(0);
       ship.body.moves = false;
+      // Fijar la posición Y para que no bajen más
+      ship.setData("fixedY", ship.y);
       ship.bombTimer = this.time.addEvent({
-        delay: 2500,
+        delay: this.getEnemyFireDelay(),
         callback: () => {
           if (!ship.active) return;
           this.sfx.lasermini.play();
           const bomb = this.bombs.create(ship.x, ship.y + 40, "bomb1");
           bomb.setVelocityY(450);
-          bomb.setTexture("bomb1"); // usar bomb1 como inicial
-          bomb.setScale(2.8);       // 🔧 tamaño editable
+          bomb.setTexture("bomb1");
+          bomb.setScale(2.8);
         },
         loop: true
       });
@@ -519,15 +541,17 @@ class GameScene extends Phaser.Scene {
       ship.setVelocityY(0);
       ship.body.allowGravity = false;
       ship.body.immovable = true;
+      // Fijar la posición Y para que no bajen más
+      ship.setData("fixedY", ship.y);
       ship.laserTimer = this.time.addEvent({
-        delay: 2500,
+        delay: this.getEnemyFireDelay(),
         callback: () => {
           if (!ship.active) return;
           this.sfx.lasermax.play();
           const laser = this.enemyLasers.create(ship.x, ship.y + 40, "laser1");
           laser.setVelocityY(450);
-          laser.setTexture("laser1"); // usar laser1 como inicial
-          laser.setScale(2);        // 🔧 tamaño editable
+          laser.setTexture("laser1");
+          laser.setScale(2);
         },
         loop: true
       });
@@ -590,6 +614,11 @@ class GameScene extends Phaser.Scene {
     projectile.destroy();
     ally.destroy();
     this.allyPlanes = this.allyPlanes.filter(a => a.active); // limpiar la lista
+  }
+
+  getEnemyFireDelay() {
+    // Disparan más rápido con más puntos, pero nunca menos de 600ms
+    return Math.max(2500 - this.score * 0.1, 600);
   }
 }
 export default GameScene;

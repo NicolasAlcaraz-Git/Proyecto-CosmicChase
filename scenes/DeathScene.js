@@ -25,11 +25,21 @@ export default class DeathScene extends Phaser.Scene {
     this.load.image('playGris', './public/menus/playgris.png');
     this.load.image('topBlanco', './public/menus/topblanco.png');
     this.load.image('topGris', './public/menus/topgris.png');
+    // Carga los sonidos de game over
+    this.load.audio('gameover1', './public/audio/gameover1.wav');
+    this.load.audio('gameover2', './public/audio/gameover2.wav');
   }
 
     create() {
     this.cameras.main.setBackgroundColor('#000');
     const centerX = this.scale.width / 2;
+
+    // Reproduce el sonido de game over según el puntaje
+    if (this.isNewHighScore) {
+        this.sound.play('gameover2', { loop: false });
+    } else {
+        this.sound.play('gameover1', { loop: false });
+    }
 
     // GAME OVER logo
     this.add.image(centerX, 150, 'logoGameOver').setOrigin(0.5).setDisplaySize(380, 160);
@@ -83,7 +93,7 @@ export default class DeathScene extends Phaser.Scene {
         this.inputCooldown = time + 150;
       } else if (Phaser.Input.Keyboard.JustDown(this.enterKey)) {
         if (this.selectedOption === 0) {
-          this.scene.start('GameScene');
+          this.scene.start('TitleScene');
         } else {
           console.log("Ir a Top Global");
         }
