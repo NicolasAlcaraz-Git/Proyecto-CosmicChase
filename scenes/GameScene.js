@@ -5,6 +5,7 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.audio('gameMusic', 'public/audio/game.music.mp3');
     // sprite de jugadores
     this.load.image("player", "./public/aviones/avion-rojo.png");
     this.load.image("p2", "./public/aviones/avion-amar.png");
@@ -72,6 +73,21 @@ class GameScene extends Phaser.Scene {
   // ACA EMPIEZA EL CREATE
   create() {
     this.road = this.add.tileSprite(this.cameras.main.width / 2, this.cameras.main.height / 2, 400, 600, "road");      // DIMENSIONES DEL MAPA
+
+    this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.5 });
+    this.gameMusic.play();
+
+    this.events.on('shutdown', () => {
+      if (this.gameMusic && this.gameMusic.isPlaying) {
+        this.gameMusic.stop();
+      }
+    });
+
+    this.events.on('destroy', () => {
+      if (this.gameMusic && this.gameMusic.isPlaying) {
+        this.gameMusic.stop();
+      }
+    });
 
     // configuracion directa con el HUD y velocidad
     this.maxSpeedNormal = 400;

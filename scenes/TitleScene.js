@@ -6,6 +6,7 @@ export default class TitleScene extends Phaser.Scene {
 
   preload() {
     // Carga de imágenes desde /public/menus/
+    this.load.audio('menuMusic', 'public/audio/menu.music.mp3');
     this.load.image('logo', 'public/menus/logo.png');
     this.load.image('alcaraz', 'public/menus/alcaraz.png');
     this.load.image('unraf', 'public/menus/unraf.png');
@@ -18,8 +19,16 @@ export default class TitleScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor('#000'); // Fondo negro
-
     const centerX = this.scale.width / 2;
+
+    this.menuMusic = this.sound.add('menuMusic', { loop: true, volume: 0.5 });
+    this.menuMusic.play();
+
+    // Cuando pasás de escena, detenés esta música
+    this.input.keyboard.on('keydown-ENTER', () => {
+      this.menuMusic.stop();
+      this.scene.start('GameScene');
+    });
 
     // Elementos fijos
     this.add.image(centerX, 65, 'unraf').setOrigin(0.5).setDisplaySize(150, 30);
