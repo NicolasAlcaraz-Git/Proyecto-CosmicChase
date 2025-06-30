@@ -7,14 +7,14 @@ export default class TitleScene extends Phaser.Scene {
   preload() {
     // Carga de imágenes desde /public/menus/
     this.load.audio('menuMusic', './public/audio/menu.music.mp3');
-    this.load.image('logo', 'public/menus/logo.png');
-    this.load.image('alcaraz', 'public/menus/alcaraz.png');
-    this.load.image('unraf', 'public/menus/unraf.png');
-    this.load.image('rocket', 'public/menus/rocket.png');
-    this.load.image('startBlanco', 'public/menus/startblanco.png');
-    this.load.image('startGris', 'public/menus/startgris.png');
-    this.load.image('topBlanco', 'public/menus/topblanco.png');
-    this.load.image('topGris', 'public/menus/topgris.png');
+    this.load.image('logo', './public/menus/logo.png');
+    this.load.image('alcaraz', './public/menus/alcaraz.png');
+    this.load.image('unraf', './public/menus/unraf.png');
+    this.load.image('rocket', './public/menus/rocket.png');
+    this.load.image('startBlanco', './public/menus/startblanco.png');
+    this.load.image('startGris', './public/menus/startgris.png');
+    this.load.image('topBlanco', './public/menus/topblanco.png');
+    this.load.image('topGris', './public/menus/topgris.png');
   }
 
   create() {

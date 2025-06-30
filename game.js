@@ -1,5 +1,6 @@
 import TitleScene from './scenes/TitleScene.js';
 import GameScene from './scenes/GameScene.js';
+import DeathScene from './scenes/DeathScene.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -15,7 +16,7 @@ const config = {
     default: 'arcade',
     arcade: { debug: false },
   },
-  scene: [TitleScene, GameScene], // Acá las escenas en orden
+  scene: [TitleScene, GameScene, DeathScene], // Acá las escenas en orden
 };
 
 new Phaser.Game(config);

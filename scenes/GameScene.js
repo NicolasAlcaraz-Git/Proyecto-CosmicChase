@@ -77,6 +77,9 @@ class GameScene extends Phaser.Scene {
     this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.5 });
     this.gameMusic.play();
 
+    this.testKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+
+
     this.events.on('shutdown', () => {
       if (this.gameMusic && this.gameMusic.isPlaying) {
         this.gameMusic.stop();
@@ -175,6 +178,13 @@ class GameScene extends Phaser.Scene {
     this.road.tilePositionY -= this.playerSpeed * 0.07;          // velocidad de movimiento del fondo respecto al jugador
     if (!this.enablePlayerControl) return;
 
+    if (Phaser.Input.Keyboard.JustDown(this.testKey)) {
+      this.scene.start('DeathScene', {
+        score: this.score || 0,
+        shipsDestroyed: this.shipsDestroyed || 0
+     });
+    }
+
     // Movimiento del jugador (simplificado y funcional)
     const moveSpeed = 300;
     let velocityX = 0;
@@ -212,7 +222,12 @@ class GameScene extends Phaser.Scene {
     this.missiles.children.each(m => m.y < -20 && m.destroy());
     this.missileCrates.children.each(c => c.y > this.scale.height + 20 && c.destroy());
 
-    if (this.fuel <= 0) this.scene.restart();
+    if (this.fuel <= 0) {
+      this.scene.start('DeathScene', {
+        score: this.score,
+        shipsDestroyed: this.shipsDestroyed
+      });
+    }
 
     this.enemiesGroup.children.each(enemy => {
       if (!enemy.active) return;
@@ -468,8 +483,12 @@ class GameScene extends Phaser.Scene {
 
   hitPlayer(player, projectile) {
     projectile.destroy();
-    this.scene.restart();
+    this.scene.start('DeathScene', {
+      score: this.score,
+      shipsDestroyed: this.shipsDestroyed
+    });
   }
+
 
   hitAlly(ally, projectile) {
     projectile.destroy();
