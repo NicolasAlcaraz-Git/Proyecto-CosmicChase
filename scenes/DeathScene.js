@@ -4,13 +4,12 @@ export default class DeathScene extends Phaser.Scene {
     this.selectedOption = 0;
   }
 
+  // inicializacion de datos
   init(data) {
-    this.score = data.score || 0;
-    this.shipsDestroyed = data.shipsDestroyed || 0;
-
+    this.score = data.score || 0;                                    // puntaje alcanzado en la partida
+    this.shipsDestroyed = data.shipsDestroyed || 0;                  // cantidad de naves destruidas
     const storedScore = localStorage.getItem('highScore') || 0;
     this.isNewHighScore = this.score > storedScore;
-
     if (this.isNewHighScore) {
       localStorage.setItem('highScore', this.score);
     }
@@ -32,7 +31,7 @@ export default class DeathScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000');
     const centerX = this.scale.width / 2;
 
-    // GAME OVER
+    // GAME OVER logo
     this.add.image(centerX, 150, 'logoGameOver').setOrigin(0.5).setDisplaySize(380, 160);
 
     // MENSAJE: High Score o New High Score
@@ -52,14 +51,14 @@ export default class DeathScene extends Phaser.Scene {
       color: '#FFD700'
     }).setOrigin(0.5);
 
-    // ROCKET SELECTOR
+    // cohete selector
     this.rocket = this.add.image(centerX - 170, 460, 'rocket').setOrigin(0.5).setDisplaySize(80, 30);
 
-    // OPCIONES
+    // opciones
     this.playText = this.add.image(centerX, 460, 'playBlanco').setOrigin(0.5).setDisplaySize(180, 30);
     this.topText = this.add.image(centerX, 530, 'topGris').setOrigin(0.5).setDisplaySize(200, 30);
 
-    // Input
+    // teclas
     this.cursors = this.input.keyboard.createCursorKeys();
     this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     this.inputCooldown = 0;

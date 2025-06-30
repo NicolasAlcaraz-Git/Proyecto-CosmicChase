@@ -5,7 +5,29 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
+    // sonidos y audios
     this.load.audio('gameMusic', './public/audio/game.music.mp3');
+    this.load.audio('bullet', './public/audio/bullet.wav');
+    this.load.audio('misil', './public/audio/misil.wav');
+    this.load.audio('itemcaja', './public/audio/itemcaja.wav');
+    this.load.audio('itemfuel', './public/audio/itemfuel.wav');
+    this.load.audio('powerup', './public/audio/powerup.wav');
+    this.load.audio('lasermini', './public/audio/lasermini.wav');
+    this.load.audio('lasermax', './public/audio/lasermax.wav');
+    this.load.audio('explodemax', './public/audio/explodemax.wav');
+    this.load.audio('explodemini', './public/audio/explodemini.wav');
+
+    // HUD lateral
+    this.load.image("highscore", "./public/menus/highscore.png");
+    this.load.image("speed", "./public/menus/speed.png");
+    this.load.image("fuel", "./public/menus/fuel.png");
+    this.load.image("tanque1", "./public/menus/tanque1.png");
+    this.load.image("tanque2", "./public/menus/tanque2.png");
+    this.load.image("tanque3", "./public/menus/tanque3.png");
+    this.load.image("tanque4", "./public/menus/tanque4.png");
+    this.load.image("missiles", "./public/menus/missiles.png");
+    this.load.image("misilhud", "./public/menus/misilhud.png");
+
     // sprite de jugadores
     this.load.image("player", "./public/aviones/avion-rojo.png");
     this.load.image("p2", "./public/aviones/avion-amar.png");
@@ -74,7 +96,7 @@ class GameScene extends Phaser.Scene {
   create() {
     this.road = this.add.tileSprite(this.cameras.main.width / 2, this.cameras.main.height / 2, 400, 600, "road");      // DIMENSIONES DEL MAPA
 
-    this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.5 });
+    this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.2 });
     this.gameMusic.play();
 
     this.testKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
@@ -91,6 +113,19 @@ class GameScene extends Phaser.Scene {
         this.gameMusic.stop();
       }
     });
+
+    // definicion de sonidos en gameplay
+    this.sfx = {
+      bullet: this.sound.add('bullet', { volume: 0.6 }),
+      misil: this.sound.add('misil', { volume: 0.3 }),
+      itemcaja: this.sound.add('itemcaja', { volume: 2.5 }),
+      itemfuel: this.sound.add('itemfuel', { volume: 3 }),
+      powerup: this.sound.add('powerup', { volume: 1.2 }),
+      lasermini: this.sound.add('lasermini', { volume: 0.3 }),
+      lasermax: this.sound.add('lasermax', { volume: 0.2 }),
+      explodemax: this.sound.add('explodemax', { volume: 0.3 }),
+      explodemini: this.sound.add('explodemini', { volume: 1 })
+    };
 
     // configuracion directa con el HUD y velocidad
     this.maxSpeedNormal = 400;
@@ -111,6 +146,7 @@ class GameScene extends Phaser.Scene {
     this.enemyLasers = this.physics.add.group();
     this.explosions = this.physics.add.group();
     this.powerups = this.physics.add.group();
+    this.shipsDestroyed = 0;
     this.allyPlanes = [];                                     // LISTA DE ACOMPAÑANTES
 
     // intervalo de sprites en disparos
@@ -138,7 +174,6 @@ class GameScene extends Phaser.Scene {
       loop: true
     });
 
-
     // jugador, avion de combate
     this.player = this.physics.add.sprite(400, 500, "player");
     this.player.setCollideWorldBounds(true);
@@ -147,12 +182,39 @@ class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys('Z,X,C');
     this.cursors = this.input.keyboard.createCursorKeys();
 
-
     // textos del HUD
-    this.missileText = this.add.text(650, 130, 'MISSILES\n6', { fontFamily: 'monospace', fontSize: '25px', fill: '#fff' });
-    this.scoreText = this.add.text(650, 20, '000000', { fontFamily: 'monospace', fontSize: '25px', fill: '#fff' });
-    this.speedText = this.add.text(650, 50, '000 km/h', { fontFamily: 'monospace', fontSize: '25px', fill: '#fff' });
-    this.fuelText = this.add.text(650, 80, 'FUEL\n100', { fontFamily: 'monospace', fontSize: '25px', fill: '#fff' });
+    // HIGHSCORE
+    this.add.image(710, 60, "highscore").setScale(0.3).setOrigin(0.5);
+    this.scoreText = this.add.text(710, 120, '000000', {
+      fontFamily: 'monospace', fontSize: '30px', fill: '#fff'
+    }).setOrigin(0.5);
+
+    // SPEED
+    this.add.image(610, 190, "speed").setScale(0.2).setOrigin(0);
+    this.speedText = this.add.text(690, 188, '000 Km/h', {
+      fontFamily: 'monospace', fontSize: '24px', fill: '#fff'
+    });
+
+    // FUEL
+    this.add.image(610, 260, "fuel").setScale(0.2).setOrigin(0);
+    this.fuelText = this.add.text(710, 257, '100%', {
+      fontFamily: 'monospace', fontSize: '24px', fill: '#fff'
+    });
+
+    // TANQUE IMAGENES
+    this.tankImage = this.add.image(705, 320, "tanque1").setScale(2.6).setOrigin(0.5);
+
+    // MISSILES
+    this.add.image(655, 400, "missiles").setScale(0.2).setOrigin(0.5);
+
+    // LISTA DE MISILES
+    this.missileIcons = []
+    const startX = 630;
+    const spacing = 30;
+    for (let i = 0; i < this.maxMissiles; i++) {
+      const icon = this.add.image(startX + i * spacing, 450, "misilhud").setScale(0.1).setVisible(true);
+      this.missileIcons.push(icon);
+    }
 
     // colisiones
     this.physics.add.overlap(this.bullets, this.enemiesGroup, this.hitEnemy, null, this);
@@ -177,7 +239,6 @@ class GameScene extends Phaser.Scene {
   update() {
     this.road.tilePositionY -= this.playerSpeed * 0.07;          // velocidad de movimiento del fondo respecto al jugador
     if (!this.enablePlayerControl) return;
-
     if (Phaser.Input.Keyboard.JustDown(this.testKey)) {
       this.scene.start('DeathScene', {
         score: this.score || 0,
@@ -188,14 +249,10 @@ class GameScene extends Phaser.Scene {
     // Movimiento del jugador (simplificado y funcional)
     const moveSpeed = 300;
     let velocityX = 0;
-
     if (this.cursors.left.isDown) velocityX = -moveSpeed;
     else if (this.cursors.right.isDown) velocityX = moveSpeed;
-
     this.player.setVelocityX(velocityX);
 
-
-    
     if (this.keys.Z.isDown) {
       this.playerSpeed = Math.min(this.playerSpeed + 2, this.maxSpeedNormal);
       this.fuel -= this.fuelDrainNormal;
@@ -206,8 +263,9 @@ class GameScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.X)) this.shootBullet();
     if (Phaser.Input.Keyboard.JustDown(this.keys.C)) this.shootMissile();
 
-    this.speedText.setText(`${Math.floor(this.playerSpeed)} km/h`);
-    this.fuelText.setText(`FUEL\n${Math.floor(this.fuel)}`);
+    const speed = Math.floor(this.playerSpeed).toString().padStart(3, ' ');
+    this.speedText.setText(`${speed} Km/h`);
+    this.fuelText.setText(`${Math.floor(this.fuel)}%`);
     this.scoreText.setText(this.score.toFixed(0).padStart(6, '0'));
 
     if (this.playerSpeed > 200 && (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + 2500)) {
@@ -237,6 +295,18 @@ class GameScene extends Phaser.Scene {
       if (enemy.x < 232 || enemy.x > 564) enemy.setData("dir", -dir);
     });
 
+    // Actualizar imagen del tanque de combustible
+    if (this.fuel > 70) {
+      this.tankImage.setTexture("tanque1");
+    } else if (this.fuel > 40) {
+      this.tankImage.setTexture("tanque2");
+    } else if (this.fuel > 10) {
+      this.tankImage.setTexture("tanque3");
+    } else {
+      this.tankImage.setTexture("tanque4");
+    }
+
+
     // movimiento fijo de los aliados en formación
     this.allyPlanes.forEach((ally, i) => {
       if (!ally.active) return;
@@ -255,6 +325,7 @@ class GameScene extends Phaser.Scene {
   shootBullet() {
     const bulletTexture = this.bulletToggle ? "bullet1" : "bullet2";
     this.bulletToggle = !this.bulletToggle;
+    this.sfx.bullet.play();
     const bullet = this.bullets.create(
       this.player.x,
       this.player.y - this.player.displayHeight / 2 - 10,
@@ -262,7 +333,6 @@ class GameScene extends Phaser.Scene {
     );
     bullet.setVelocityY(-900);
     bullet.setScale(1.4); // ahora es configurable
-
     this.allyPlanes.forEach(ally => {
       if (!ally.active) return;
     const bulletTexture = this.bulletToggle ? "bullet1" : "bullet2";
@@ -279,6 +349,7 @@ class GameScene extends Phaser.Scene {
 
   shootMissile() {
     if (this.missilesAvailable <= 0) return;
+    this.sfx.misil.play();
     const missile = this.missiles.create(this.player.x, this.player.y - this.player.displayHeight / 2 - 10, 'missile1');
     missile.setVelocityY(-400);
     missile.setScale(2.8);
@@ -289,7 +360,9 @@ class GameScene extends Phaser.Scene {
   }
 
   updateMissileText() {
-    this.missileText.setText(`MISSILES\n${this.missilesAvailable}`);
+    for (let i = 0; i < this.maxMissiles; i++) {
+      this.missileIcons[i].setVisible(i < this.missilesAvailable);
+    }
   }
 
   // SPAWN DEL ITEM CAJA MISILES
@@ -313,7 +386,7 @@ class GameScene extends Phaser.Scene {
   // codigo para recolectar powerup
   collectPowerUp(player, power) {
     power.destroy();
-
+    this.sfx.powerup.play();
     if (this.allyPlanes.length >= 2) {
       this.score += 1200;
       return;
@@ -333,6 +406,7 @@ class GameScene extends Phaser.Scene {
   // CODIGO PARA RECOLECTAR CAJA MISILES
   collectMissileCrate(entity, crate) {
     crate.destroy();
+    this.sfx.itemcaja.play();
     this.missilesAvailable = this.maxMissiles;
     this.updateMissileText();
     this.score += 250;
@@ -341,6 +415,7 @@ class GameScene extends Phaser.Scene {
   // CODIGO PARA RECOLECTAR ITEM COMBUSTIBLE
   collectFuel(entity, fuel) {
     fuel.destroy();
+    this.sfx.itemfuel.play();
     this.fuel = Math.min(this.fuel + 25, 100);
     this.score += 250;
   }
@@ -408,6 +483,7 @@ class GameScene extends Phaser.Scene {
         delay: 2500,
         callback: () => {
           if (!ship.active) return;
+          this.sfx.lasermini.play();
           const bomb = this.bombs.create(ship.x, ship.y + 40, "bomb1");
           bomb.setVelocityY(450);
           bomb.setTexture("bomb1"); // usar bomb1 como inicial
@@ -434,6 +510,7 @@ class GameScene extends Phaser.Scene {
         delay: 2500,
         callback: () => {
           if (!ship.active) return;
+          this.sfx.lasermax.play();
           const laser = this.enemyLasers.create(ship.x, ship.y + 40, "laser1");
           laser.setVelocityY(450);
           laser.setTexture("laser1"); // usar laser1 como inicial
@@ -456,7 +533,9 @@ class GameScene extends Phaser.Scene {
     let hp = enemy.getData("life") - 1;
     if (hp <= 0) {
       this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 100);
+      this.shipsDestroyed++;
       enemy.destroy();
+      this.sfx.explodemini.play();
     } else {
       enemy.setData("life", hp);
       const type = enemy.getData("type");
@@ -467,9 +546,11 @@ class GameScene extends Phaser.Scene {
 
   hitWithMissile(missile, enemy) {
     missile.destroy();
+    this.sfx.explodemax.play();
     this.spawnExplosion(enemy.x, enemy.y);
     if (enemy.active) {
       this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 500);
+      this.shipsDestroyed++;
       enemy.destroy();
     }
   }
@@ -477,7 +558,9 @@ class GameScene extends Phaser.Scene {
   hitByExplosion(explosion, enemy) {
     if (enemy.active) {
       this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 100);
+      this.shipsDestroyed++;
       enemy.destroy();
+      this.sfx.explodemini.play();
     }
   }
 

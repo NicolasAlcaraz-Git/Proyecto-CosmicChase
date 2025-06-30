@@ -21,7 +21,7 @@ export default class TitleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000'); // Fondo negro
     const centerX = this.scale.width / 2;
 
-    this.menuMusic = this.sound.add('menuMusic', { loop: true, volume: 0.5 });
+    this.menuMusic = this.sound.add('menuMusic', { loop: true, volume: 0.2 });
     this.menuMusic.play();
 
     // Cuando pasás de escena, detenés esta música
