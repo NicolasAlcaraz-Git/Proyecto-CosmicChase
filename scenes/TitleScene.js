@@ -1,7 +1,11 @@
 export default class TitleScene extends Phaser.Scene {
   constructor() {
     super('TitleScene');
-    this.selectedOption = 0; // 0: Start, 1: Top Global
+    this.selectedOption = 0;
+  }
+
+  init(data) {
+    this.musicData = data.music; // ✅ Guardamos la música (si viene)
   }
 
   preload() {
@@ -21,14 +25,15 @@ export default class TitleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000'); // Fondo negro
     const centerX = this.scale.width / 2;
 
-    this.menuMusic = this.sound.add('menuMusic', { loop: true, volume: 0.2 });
-    this.menuMusic.play();
-
-    // Cuando pasás de escena, detenés esta música
-    this.input.keyboard.on('keydown-ENTER', () => {
-      this.menuMusic.stop();
-      this.scene.start('GameScene');
-    });
+    if (!this.musicData) {
+      this.menuMusic = this.sound.add('menuMusic', { loop: true, volume: 0.2 });
+      this.menuMusic.play();
+    } else {
+      this.menuMusic = this.musicData;
+      if (!this.menuMusic.isPlaying) {
+        this.menuMusic.play({ loop: true });
+      }
+    }
 
     // Elementos fijos
     this.add.image(centerX, 65, 'unraf').setOrigin(0.5).setDisplaySize(150, 30);
@@ -64,7 +69,7 @@ export default class TitleScene extends Phaser.Scene {
         this.inputCooldown = time + 150;
       } else if (Phaser.Input.Keyboard.JustDown(this.enterKey)) {
         if (this.selectedOption === 0) {
-          this.scene.start('GameScene');
+            this.scene.start('ControlScene', { music: this.menuMusic });
         } else {
           // Futuro: mostrar tabla global
         }

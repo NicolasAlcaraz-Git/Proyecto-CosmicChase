@@ -83,7 +83,7 @@ class GameScene extends Phaser.Scene {
     this.load.image("hunter7", "./public/naves/cazador-rojo6.png");
 
     // otros, items y demás
-    this.load.image("road", "./public/items/background.jpg");
+    this.load.image("road", "./public/items/background.png");
     this.load.image("explosion", "./public/items/explosion.png");
     this.load.image("fuelItem", "./public/items/fuel.png");
     this.load.image("caja", "./public/items/caja.png");
@@ -230,6 +230,16 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.allyPlanes, this.fuelItems, this.collectFuel, null, this);
     this.physics.add.overlap(this.allyPlanes, this.missileCrates, this.collectMissileCrate, null, this);
 
+    this.altKeys = this.input.keyboard.addKeys({
+      left: Phaser.Input.Keyboard.KeyCodes.J,
+      down: Phaser.Input.Keyboard.KeyCodes.K,
+      right: Phaser.Input.Keyboard.KeyCodes.L,
+      up: Phaser.Input.Keyboard.KeyCodes.I
+    });
+
+    this.keyK = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+    this.keyI = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
+
     this.physics.world.setBounds(200, 0, this.scale.width / 2, this.scale.height);
     this.time.delayedCall(500, () => this.enablePlayerControl = true);
     this.time.addEvent({ delay: 15000, callback: this.spawnFuelItem, callbackScope: this, loop: true });          // tiempo de spawn para el item combustible
@@ -249,8 +259,11 @@ class GameScene extends Phaser.Scene {
     // Movimiento del jugador (simplificado y funcional)
     const moveSpeed = 300;
     let velocityX = 0;
-    if (this.cursors.left.isDown) velocityX = -moveSpeed;
-    else if (this.cursors.right.isDown) velocityX = moveSpeed;
+    if (this.cursors.left.isDown || this.altKeys.left.isDown) {
+      velocityX = -moveSpeed;
+    } else if (this.cursors.right.isDown || this.altKeys.right.isDown) {
+      velocityX = moveSpeed;
+    }
     this.player.setVelocityX(velocityX);
 
     if (this.keys.Z.isDown) {
