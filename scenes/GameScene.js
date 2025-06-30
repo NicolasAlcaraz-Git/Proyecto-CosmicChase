@@ -414,6 +414,15 @@ class GameScene extends Phaser.Scene {
     fuel.setScale(1.5);
   }
 
+  spawnPowerUp() {
+    if (this.playerSpeed < 400) return; // Solo si el jugador va rápido
+    if (this.powerups.countActive(true) >= 1) return;
+    const x = Phaser.Math.Between(230, 570);
+    const power = this.powerups.create(x, -20, "powerup");
+    power.setVelocityY(200);
+    power.setScale(0.2);
+  }
+
   // codigo para recolectar powerup
   collectPowerUp(player, power) {
     power.destroy();
