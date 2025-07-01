@@ -24,8 +24,6 @@ export default class DeathScene extends Phaser.Scene {
     this.load.image('playBlanco', './public/menus/playblanco.png');
     this.load.image('playGris', './public/menus/playgris.png');
     this.load.image('topBlanco', './public/menus/topblanco.png');
-    this.load.image('topGris', './public/menus/topgris.png');
-    // Carga los sonidos de game over
     this.load.audio('gameover1', './public/audio/gameover1.wav');
     this.load.audio('gameover2', './public/audio/gameover2.wav');
   }
@@ -34,7 +32,7 @@ export default class DeathScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000');
     const centerX = this.scale.width / 2;
 
-    // Reproduce el sonido de game over según el puntaje
+    // reproduce el sonido de game over según el puntaje
     if (this.isNewHighScore) {
         this.sound.play('gameover2', { loop: false });
     } else {
@@ -72,7 +70,7 @@ export default class DeathScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
 
-    // Teclas alternativas (I/K)
+    // teclas alternativas (I/K)
     this.altKeys = this.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.I,
       down: Phaser.Input.Keyboard.KeyCodes.K

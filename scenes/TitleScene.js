@@ -5,11 +5,10 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   init(data) {
-    this.musicData = data.music; // ✅ Guardamos la música (si viene)
+    this.musicData = data.music;
   }
 
   preload() {
-    // Carga de imágenes desde /public/menus/
     this.load.audio('menuMusic', './public/audio/menu.music.mp3');
     this.load.image('logo', './public/menus/logo.png');
     this.load.image('alcaraz', './public/menus/alcaraz.png');
@@ -22,7 +21,7 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    this.cameras.main.setBackgroundColor('#000'); // Fondo negro
+    this.cameras.main.setBackgroundColor('#000'); // fondo negro
     const centerX = this.scale.width / 2;
 
     if (!this.musicData) {
@@ -35,23 +34,23 @@ export default class TitleScene extends Phaser.Scene {
       }
     }
 
-    // Elementos fijos
+    // elementos fijos
     this.add.image(centerX, 65, 'unraf').setOrigin(0.5).setDisplaySize(150, 30);
     this.add.image(centerX + 10, 190, 'logo').setOrigin(0.5).setDisplaySize(450, 180);
     this.add.image(centerX, 320, 'alcaraz').setOrigin(0.5).setDisplaySize(250, 30);
 
-    // Rocket selector
+    // rocket selector
     this.rocket = this.add.image(centerX - 170, 420, 'rocket').setOrigin(0.5).setDisplaySize(80, 30);
 
-    // Opciones
+    // opciones
     this.startText = this.add.image(centerX, 420, 'startBlanco').setOrigin(0.5).setDisplaySize(110, 30);
     this.topText = this.add.image(centerX, 490, 'topGris').setOrigin(0.5).setDisplaySize(210, 30);
 
-    // Entrada de teclado
+    // entrada de teclado
     this.cursors = this.input.keyboard.createCursorKeys();
     this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
 
-    // NUEVO: teclas alternativas
+    // teclas alternativas
     this.altKeys = this.input.keyboard.addKeys({
       left: Phaser.Input.Keyboard.KeyCodes.J,
       right: Phaser.Input.Keyboard.KeyCodes.L,
@@ -59,14 +58,14 @@ export default class TitleScene extends Phaser.Scene {
       down: Phaser.Input.Keyboard.KeyCodes.K
     });
 
-    // Control de tiempo para evitar múltiples inputs rápidos
+    // control de tiempo para evitar múltiples inputs rápidos
     this.inputCooldown = 0;
   }
 
   update(time) {
-    // Cooldown para evitar movimientos múltiples
+    // cooldown para evitar movimientos múltiples
     if (time > this.inputCooldown) {
-      // Soporte para flechas y teclas alternativas
+      // soporte para flechas y teclas alternativas
       if ((this.cursors.down.isDown || this.altKeys.down.isDown) && this.selectedOption === 0) {
         this.selectedOption = 1;
         this.updateMenu();
@@ -78,8 +77,6 @@ export default class TitleScene extends Phaser.Scene {
       } else if (Phaser.Input.Keyboard.JustDown(this.enterKey)) {
         if (this.selectedOption === 0) {
             this.scene.start('ControlScene', { music: this.menuMusic });
-        } else {
-          // Futuro: mostrar tabla global
         }
       }
     }

@@ -71,77 +71,77 @@ class GameScene extends Phaser.Scene {
     this.load.image("avionPower", "./public/aviones/avion-power.png");
   }
 
-  // ACA EMPIEZA EL CREATE
+  // ACA EMPIEZA EL CREATE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   create() {
-    this.road = this.add.tileSprite(this.cameras.main.width / 2, this.cameras.main.height / 2, 400, 600, "road");      // posicion del fondo
-    this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.2 });                                         // musica de fondo
+    this.road = this.add.tileSprite(this.cameras.main.width / 2, this.cameras.main.height / 2, 400, 600, "road"); // posicion del fondo
+    this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.2 });                                    // musica de fondo
     this.gameMusic.play();
 
-    this.testKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);                                       // tecla de prueba para gameover
+    this.testKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);                                  // tecla de prueba para acceder a gameover
 
     // metodo para cerrar la musica
-    this.events.on('shutdown', () => {                                                                                 // se ejecuta cuando la escena se cierra
-      if (this.gameMusic && this.gameMusic.isPlaying) {                                                                // si la musica esta sonando, la detiene
+    this.events.on('shutdown', () => {                                                                            // se ejecuta cuando la escena se cierra
+      if (this.gameMusic && this.gameMusic.isPlaying) {                                                           // si la musica esta sonando, la detiene
         this.gameMusic.stop();
       }
     });
 
-  
+    this.gameIsFrozen = false; // permite volver a iniciar el juego despues del GameOver (SIN ESTO NO VIVIMOS)
 
-    // definicion de sonidos en gameplay
-    this.sfx = {
-      bullet: this.sound.add('bullet', { volume: 0.6 }),
-      misil: this.sound.add('misil', { volume: 0.3 }),
-      itemcaja: this.sound.add('itemcaja', { volume: 2.5 }),
-      itemfuel: this.sound.add('itemfuel', { volume: 3 }),
-      powerup: this.sound.add('powerup', { volume: 1.2 }),
-      lasermini: this.sound.add('lasermini', { volume: 0.3 }),
-      lasermax: this.sound.add('lasermax', { volume: 0.2 }),
-      explodemax: this.sound.add('explodemax', { volume: 0.3 }),
-      explodemini: this.sound.add('explodemini', { volume: 1 })
-    };
-
-    // configuracion directa con el HUD y velocidad
-    this.maxSpeedNormal = 600;
-    this.fuelDrainNormal = 0.03;
+    // configuracion directa con el HUD y velocidad del jugador
+    this.maxSpeedNormal = 600;               // velocidad maxima del jugador
+    this.fuelDrainNormal = 0.03;             // nivel de consumo de combustible
     this.playerSpeed = 0;
     this.fuel = 100;
     this.score = 0;
     this.maxMissiles = 6;
     this.missilesAvailable = this.maxMissiles;
 
+    // definicion de sonidos en gameplay
+    this.sfx = {
+      misil: this.sound.add('misil', { volume: 0.3 }),
+      bullet: this.sound.add('bullet', { volume: 0.6 }),
+      itemfuel: this.sound.add('itemfuel', { volume: 3 }),
+      powerup: this.sound.add('powerup', { volume: 1.2 }),
+      itemcaja: this.sound.add('itemcaja', { volume: 2.5 }),
+      lasermax: this.sound.add('lasermax', { volume: 0.2 }),
+      lasermini: this.sound.add('lasermini', { volume: 0.3 }),
+      explodemax: this.sound.add('explodemax', { volume: 0.3 }),
+      explodemini: this.sound.add('explodemini', { volume: 1 })
+    };
+
     // GENERACION DE GRUPOS
-    this.enemiesGroup = this.physics.add.group();
+    this.bombs = this.physics.add.group();
+
     this.bullets = this.physics.add.group();
     this.missiles = this.physics.add.group();
     this.fuelItems = this.physics.add.group();
+    this.enemiesGroup = this.physics.add.group();
     this.missileCrates = this.physics.add.group();
-    this.bombs = this.physics.add.group();
     this.enemyLasers = this.physics.add.group();
     this.explosions = this.physics.add.group();
     this.powerups = this.physics.add.group();
     this.shipsDestroyed = 0;
-    this.allyPlanes = []; // Puedes mantener el array si quieres lógica personalizada
-    this.allyGroup = this.physics.add.group(); // Nuevo grupo para aliados
+    this.allyPlanes = [];                            // array para los aliados tipo avionPower
+    this.allyGroup = this.physics.add.group();       // grupo para los aliados
 
     // intervalo de sprites en disparos
    this.time.addEvent({
-     delay: 100,                                              // TIEMPO DE CAMBIO ENTRE SPRITES
+     delay: 100,            // tiempo de cambio de sprites en ms
      callback: () => {
        const toggleFrame = (obj, frame1, frame2) => {
          if (!obj.active) return;
          const next = obj.texture.key === frame1 ? frame2 : frame1;
          obj.setTexture(next);
         };
-        this.missiles.children.each(m => toggleFrame(m, "missile1", "missile2"));
-        this.bombs.children.each(b => toggleFrame(b, "bomb1", "bomb2"));
-        this.enemyLasers.children.each(l => toggleFrame(l, "laser1", "laser2"));
-        toggleFrame(this.player, "avion-rojo1", "avion-rojo2");
-        // NUEVO: animar todos los aliados tipo avionPower
+        this.missiles.children.each(m => toggleFrame(m, "missile1", "missile2"));            // cambio de sprites de misiles
+        this.bombs.children.each(b => toggleFrame(b, "bomb1", "bomb2"));                     // cambio de sprites de bombas
+        this.enemyLasers.children.each(l => toggleFrame(l, "laser1", "laser2"));             // cambio de sprites de lasers
+        toggleFrame(this.player, "avion-rojo1", "avion-rojo2");                              // cambio de sprites del jugador
         this.allyPlanes.forEach(ally => {
           if (!ally.active) return;
           if (ally.texture.key === "avion-power1" || ally.texture.key === "avion-power2") {
-            toggleFrame(ally, "avion-power1", "avion-power2");
+            toggleFrame(ally, "avion-power1", "avion-power2");                               // cambio de sprites de aliados
           }
         });
       },
@@ -149,23 +149,23 @@ class GameScene extends Phaser.Scene {
       loop: true
     });
 
-    // EVENTO PARA EL POWER UP
+    // evento para el powerup
     this.time.addEvent({
-      delay: 60000,                    // TIEMPO DE APARICION EN MILISEGUNDOS
+      delay: 60000,                 //tiempo de aparicion en ms (1 minuto)
       callback: this.spawnPowerUp,
       callbackScope: this,
       loop: true
     });
 
     // jugador, avion de combate
-    this.player = this.physics.add.sprite(400, 500, "avion-rojo1");
+    this.player = this.physics.add.sprite(400, 500, "avion-rojo1"); // llamada al sprite del jugador
     this.player.setCollideWorldBounds(true);
     this.player.setScale(1);
     this.enablePlayerControl = false;
-    this.keys = this.input.keyboard.addKeys('Z,X,C');
-    this.cursors = this.input.keyboard.createCursorKeys();
+    this.keys = this.input.keyboard.addKeys('Z,X,C');               // teclas de accion del jugador
+    this.cursors = this.input.keyboard.createCursorKeys();          // teclas de control del jugador (solo movimiento lateral)
 
-    // textos del HUD
+    // TEXTOS DEL HUD LATERAL
     // HIGHSCORE
     this.add.image(710, 60, "highscore").setScale(0.3).setOrigin(0.5);
     this.scoreText = this.add.text(710, 120, '000000', {
@@ -184,7 +184,7 @@ class GameScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '24px', fill: '#fff'
     });
 
-    // TANQUE IMAGENES
+    // INDICADOR TANQUE
     this.tankImage = this.add.image(705, 320, "tanque1").setScale(2.6).setOrigin(0.5);
 
     // MISSILES
@@ -200,20 +200,21 @@ class GameScene extends Phaser.Scene {
     }
 
     // colisiones
-    this.physics.add.overlap(this.bullets, this.enemiesGroup, this.hitEnemy, null, this);
     this.physics.add.overlap(this.player, this.bombs, this.hitPlayer, null, this);
+    this.physics.add.overlap(this.allyGroup, this.bombs, this.hitAlly, null, this);
     this.physics.add.overlap(this.player, this.enemyLasers, this.hitPlayer, null, this);
+    this.physics.add.overlap(this.player, this.fuelItems, this.collectFuel, null, this);
+    this.physics.add.overlap(this.allyGroup, this.enemyLasers, this.hitAlly, null, this);
+    this.physics.add.overlap(this.bullets, this.enemiesGroup, this.hitEnemy, null, this);
+    this.physics.add.overlap(this.player, this.powerups, this.collectPowerUp, null, this);
+    this.physics.add.overlap(this.allyGroup, this.fuelItems, this.collectFuel, null, this);
+    this.physics.add.overlap(this.allyGroup, this.powerups, this.collectPowerUp, null, this);
     this.physics.add.overlap(this.missiles, this.enemiesGroup, this.hitWithMissile, null, this);
     this.physics.add.overlap(this.explosions, this.enemiesGroup, this.hitByExplosion, null, this);
-    this.physics.add.overlap(this.player, this.fuelItems, this.collectFuel, null, this);
     this.physics.add.overlap(this.player, this.missileCrates, this.collectMissileCrate, null, this);
-    this.physics.add.overlap(this.player, this.powerups, this.collectPowerUp, null, this);
-    this.physics.add.overlap(this.allyGroup, this.bombs, this.hitAlly, null, this);
-    this.physics.add.overlap(this.allyGroup, this.enemyLasers, this.hitAlly, null, this);
-    this.physics.add.overlap(this.allyGroup, this.fuelItems, this.collectFuel, null, this);
     this.physics.add.overlap(this.allyGroup, this.missileCrates, this.collectMissileCrate, null, this);
-    this.physics.add.overlap(this.allyGroup, this.powerups, this.collectPowerUp, null, this);
 
+    // teclas alternativas para movimiento (PETICION ESPECIAL DE UN USUARIO CUYAS FLECHAS NO FUNCIONAN)
     this.altKeys = this.input.keyboard.addKeys({
       left: Phaser.Input.Keyboard.KeyCodes.J,
       down: Phaser.Input.Keyboard.KeyCodes.K,
@@ -221,28 +222,28 @@ class GameScene extends Phaser.Scene {
       up: Phaser.Input.Keyboard.KeyCodes.I
     });
 
-    this.keyK = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
-    this.keyI = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
-
+    // configuraciones de la camara y spawn de items
     this.physics.world.setBounds(200, 0, this.scale.width / 2, this.scale.height);
     this.time.delayedCall(500, () => this.enablePlayerControl = true);
-    this.time.addEvent({ delay: 15000, callback: this.spawnFuelItem, callbackScope: this, loop: true });          // tiempo de spawn para el item combustible
-    this.time.addEvent({ delay: 35000, callback: this.spawnMissileCrate, callbackScope: this, loop: true });      // tiempo de spawn para el item caja de misiles
+    this.time.addEvent({ delay: 15000, callback: this.spawnFuelItem, callbackScope: this, loop: true });          // tiempo de spawn para el item combustible en ms
+    this.time.addEvent({ delay: 35000, callback: this.spawnMissileCrate, callbackScope: this, loop: true });      // tiempo de spawn para el item caja de misiles en ms
   }
 
+  // ACA EMPIEZA EL UPADTE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   update() {
-    if (this.gameIsFrozen) return;
-    this.road.tilePositionY -= this.playerSpeed * 0.03;
-    if (!this.enablePlayerControl) return;
-    if (Phaser.Input.Keyboard.JustDown(this.testKey)) {
+    // verifica si el juego esta congelado o no
+    if (this.gameIsFrozen) return;                       // si el juego esta congelado, no actualiza nada
+    this.road.tilePositionY -= this.playerSpeed * 0.03;  // movimiento del fondo respecto a la velocidad del jugador
+    if (!this.enablePlayerControl) return;               // deja de ejecutar el update si el jugador no tiene control
+    if (Phaser.Input.Keyboard.JustDown(this.testKey)) {  // tecla de prueba para acceder a GameOver (fue muy util durante el desarrollo)
       this.scene.start('DeathScene', {
         score: this.score || 0,
         shipsDestroyed: this.shipsDestroyed || 0
      });
     }
 
-    // Movimiento del jugador (soporta flechas y J/L)
-    const moveSpeed = 300;
+    // movimiento lateral del jugador (permite flechas y J/L)
+    const moveSpeed = 300;                                    // velocidad de movimiento lateral del jugador
     let velocityX = 0;
     if (this.cursors.left.isDown || this.altKeys.left.isDown) {
       velocityX = -moveSpeed;
@@ -251,6 +252,7 @@ class GameScene extends Phaser.Scene {
     }
     this.player.setVelocityX(velocityX);
 
+    // velocidad del disparo al presionar Z y drenado de combustible
     if (this.keys.Z.isDown) {
       this.playerSpeed = Math.min(this.playerSpeed + 2, this.maxSpeedNormal);
       this.fuel -= this.fuelDrainNormal;
@@ -258,33 +260,36 @@ class GameScene extends Phaser.Scene {
       this.playerSpeed *= 0.99;
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.X)) this.shootBullet();
-    if (Phaser.Input.Keyboard.JustDown(this.keys.C)) this.shootMissile();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.X)) this.shootBullet();     // disparo de balas al presionar X
+    if (Phaser.Input.Keyboard.JustDown(this.keys.C)) this.shootMissile();    // disparo de misiles al presionar C
 
-    const speed = Math.floor(this.playerSpeed).toString().padStart(3, ' ');
-    this.speedText.setText(`${speed} Km/h`);
-    this.fuelText.setText(`${Math.floor(this.fuel)}%`);
-    this.scoreText.setText(this.score.toFixed(0).padStart(6, '0'));
+    const speed = Math.floor(this.playerSpeed).toString().padStart(3, ' ');  // formatea la velocidad del jugador
+    this.speedText.setText(`${speed} Km/h`);                                 // actualiza el texto de velocidad
+    this.fuelText.setText(`${Math.floor(this.fuel)}%`);                      // actualiza el texto de combustible
+    this.scoreText.setText(this.score.toFixed(0).padStart(6, '0'));          // actualiza el texto de score
+ 
+    const baseDelay = 2500;                                                  // delay base para el spawn de enemigos (2 segundos y medio)
+    const minDelay = 600;                                                    // delay minimo para el spawn de enemigos (0.6 segundos)
+    const spawnDelay = Math.max(baseDelay - this.score * 0.1, minDelay);     // delay de spawn de enemigos basado en el score (va aumentando)
 
-    const baseDelay = 2500;
-    const minDelay = 600;
-    const spawnDelay = Math.max(baseDelay - this.score * 0.1, minDelay);
-
+    // spawn de enemigos basado en la velocidad del jugador y el tiempo transcurrido
     if (this.playerSpeed > 450 && (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + spawnDelay)) {
-      if (this.enemiesGroup.countActive(true) < 8) {
+      if (this.enemiesGroup.countActive(true) < 8) {       // si hay menos de 8 enemigos activos, spawnea un nuevo enemigo
         this.spawnRandomEnemy();
         this.lastEnemyTime = this.time.now;
       }
     }
 
-    this.bombs.children.each(b => b.y > 600 && b.destroy());
-    this.enemyLasers.children.each(l => l.y > 620 && l.destroy());
-    this.missiles.children.each(m => m.y < -20 && m.destroy());
-    this.missileCrates.children.each(c => c.y > this.scale.height + 20 && c.destroy());
+    // limpiezas de items
+    this.bullets.children.each(b => b.y < -20 && b.destroy());                            // limpia las balas que salgan de pantalla
+    this.bombs.children.each(b => b.y > 600 && b.destroy());                              // limpia las bombas que salgan de pantalla
+    this.enemyLasers.children.each(l => l.y > 620 && l.destroy());                        // limpia los lasers de enemigos que salgan de pantalla
+    this.missiles.children.each(m => m.y < -20 && m.destroy());                           // limpia los misiles que salgan de pantalla
+    this.powerups.children.each(p => p.y > this.scale.height + 20 && p.destroy());        // limpia los powerups que salgan de pantalla
+    this.missileCrates.children.each(c => c.y > this.scale.height + 20 && c.destroy());   // limpia las cajas de misiles que salgan de pantalla
+    this.fuelItems.children.each(f => f.y > this.scale.height + 20 && f.destroy());       // limpia los items de combustible que salgan de pantalla
 
-    // 💡 Limpia powerups que salgan de pantalla
-    this.powerups.children.each(p => p.y > this.scale.height + 20 && p.destroy());
-
+  
     if (this.fuel <= 0) {
       this.scene.start('DeathScene', {
         score: this.score,

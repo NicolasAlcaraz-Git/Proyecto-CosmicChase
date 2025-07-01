@@ -24,17 +24,17 @@ class ControlScene extends Phaser.Scene {
   }
 
   create() {
-    // Imagen fija superior
+    // imagen fija superior
     this.add.image(400, 90, 'controls').setScale(0.2);
 
-    // Títulos
+    // títulos
     this.add.image(220, 160, 'action').setScale(0.2);
     this.add.image(570, 160, 'move').setScale(0.2);
 
-    // Teclas amarillas
+    // teclas amarillas
     this.add.image(220, 260, 'teclas').setScale(0.65);
 
-    // Imagen que alterna entre flechas y teclas (rojas)
+    // imagen que alterna entre flechas y teclas (rojas)
     this.currentAlt = this.add.image(570, 260, 'flechas').setScale(0.8);
     this.altState = true;
     this.time.addEvent({
@@ -49,14 +49,14 @@ class ControlScene extends Phaser.Scene {
     // instrucciones
     this.add.image(180, 370, 'order').setScale(0.17);
 
-    // Opciones
+    // opciones
     this.gameStart = this.add.image(400, 480, 'gameblanco').setScale(0.5);
     this.back = this.add.image(400, 540, 'backgris').setScale(0.5);
 
-    // Misil selector
+    // misil selector
     this.selector = this.add.image(170, 440, 'rocket').setScale(0.15);
 
-    // Input
+    // input
     this.cursors = this.input.keyboard.createCursorKeys();
     this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     this.zKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
@@ -102,11 +102,11 @@ class ControlScene extends Phaser.Scene {
   selectOption() {
     if (this.optionIndex === 0) {
       if (this.music && this.music.isPlaying) {
-        this.music.stop(); // Solo al ir a GameScene
+        this.music.stop(); // solo al ir a GameScene
       }
       this.scene.start('GameScene');
     } else {
-      this.scene.start('TitleScene', { music: this.music }); // Volvés con música
+      this.scene.start('TitleScene', { music: this.music }); // volver a TitleScene con la música
     }
   }
 }
