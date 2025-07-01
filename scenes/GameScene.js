@@ -1,56 +1,36 @@
 class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
-    this.bulletToggle = true; // al inicio del constructor
+    this.bulletToggle = true; // intercambio de sprites de disparo
   }
 
   preload() {
     // sonidos y audios
-    this.load.audio('gameMusic', './public/audio/game.music.mp3');
-    this.load.audio('bullet', './public/audio/bullet.wav');
     this.load.audio('misil', './public/audio/misil.wav');
+    this.load.audio('bullet', './public/audio/bullet.wav');
+    this.load.audio('powerup', './public/audio/powerup.wav');
+    this.load.audio('lasermax', './public/audio/lasermax.wav');
+    this.load.audio('lasermini', './public/audio/lasermini.wav');
     this.load.audio('itemcaja', './public/audio/itemcaja.wav');
     this.load.audio('itemfuel', './public/audio/itemfuel.wav');
-    this.load.audio('powerup', './public/audio/powerup.wav');
-    this.load.audio('lasermini', './public/audio/lasermini.wav');
-    this.load.audio('lasermax', './public/audio/lasermax.wav');
+    this.load.audio('gameMusic', './public/audio/game.music.mp3');
     this.load.audio('explodemax', './public/audio/explodemax.wav');
     this.load.audio('explodemini', './public/audio/explodemini.wav');
-
     // HUD lateral
-    this.load.image("highscore", "./public/menus/highscore.png");
-    this.load.image("speed", "./public/menus/speed.png");
     this.load.image("fuel", "./public/menus/fuel.png");
+    this.load.image("speed", "./public/menus/speed.png");
     this.load.image("tanque1", "./public/menus/tanque1.png");
     this.load.image("tanque2", "./public/menus/tanque2.png");
     this.load.image("tanque3", "./public/menus/tanque3.png");
     this.load.image("tanque4", "./public/menus/tanque4.png");
     this.load.image("missiles", "./public/menus/missiles.png");
     this.load.image("misilhud", "./public/menus/misilhud.png");
-
-    // sprite de jugadores
-    this.load.image("player", "./public/aviones/avion-rojo.png");
-    this.load.image("p2", "./public/aviones/avion-amar.png");
-    this.load.image("p3", "./public/aviones/avion-azul.png");
-    this.load.image("p4", "./public/aviones/avion-blan.png");
-    this.load.image("p5", "./public/aviones/avion-negro.png");
-    this.load.image("p6", "./public/aviones/avion-verde.png");
-    this.load.image("p7", "./public/aviones/avion-ale.png");
-    this.load.image("p8", "./public/aviones/avion-arg.png");
-    this.load.image("p9", "./public/aviones/avion-bra.png");
-    this.load.image("p10", "./public/aviones/avion-chi.png");
-    this.load.image("p11", "./public/aviones/avion-esp.png");
-    this.load.image("p12", "./public/aviones/avion-fra.png");
-    this.load.image("p13", "./public/aviones/avion-ita.png");
-    this.load.image("p14", "./public/aviones/avion-jap.png");
-    this.load.image("p15", "./public/aviones/avion-usa.png");
-    this.load.image("p16", "./public/aviones/avion-arstotzka.png");
-    this.load.image("p17", "./public/aviones/avion-farfania.png");
+    this.load.image("highscore", "./public/menus/highscore.png");
+    // sprites de aviones
     this.load.image("avion-rojo1", "./public/aviones/avion-rojo1.png");
     this.load.image("avion-rojo2", "./public/aviones/avion-rojo2.png");
     this.load.image("avion-power1", "./public/aviones/avion-power1.png");
     this.load.image("avion-power2", "./public/aviones/avion-power2.png");
-
     // disparos en general
     this.load.image("bomb1", "./public/items/bomb1.png");
     this.load.image("bomb2", "./public/items/bomb2.png");
@@ -60,23 +40,12 @@ class GameScene extends Phaser.Scene {
     this.load.image("bullet2", "./public/items/bullet2.png");
     this.load.image("missile1", "./public/items/misil1.png");
     this.load.image("missile2", "./public/items/misil2.png");
-
     // cargueros (cargo)
     this.load.image("cargo1", "./public/naves/carguero56x48-azul.png");
     this.load.image("cargo2", "./public/naves/carguero-rojo1.png");
     this.load.image("cargo3", "./public/naves/carguero-rojo2.png");
     this.load.image("cargo4", "./public/naves/carguero-rojo3.png");
     this.load.image("cargo5", "./public/naves/carguero-rojo4.png");
-
-    // explosiones
-    this.load.image("explode1", "./public/items/explode1.png");
-    this.load.image("explode2", "./public/items/explode2.png");
-    this.load.image("explode3", "./public/items/explode3.png");
-    this.load.image("explode4", "./public/items/explode4.png");
-    this.load.image("explode5", "./public/items/explode5.png");
-    this.load.image("explode6", "./public/items/explode6.png");
-    this.load.image("explode7", "./public/items/explode7.png");
-
     // cazadores (hunter)
     this.load.image("hunter1", "./public/naves/cazador52x64-azul.png");
     this.load.image("hunter2", "./public/naves/cazador-rojo1.png");
@@ -85,39 +54,39 @@ class GameScene extends Phaser.Scene {
     this.load.image("hunter5", "./public/naves/cazador-rojo4.png");
     this.load.image("hunter6", "./public/naves/cazador-rojo5.png");
     this.load.image("hunter7", "./public/naves/cazador-rojo6.png");
-
+    // explosiones
+    this.load.image("explode1", "./public/items/explode1.png");
+    this.load.image("explode2", "./public/items/explode2.png");
+    this.load.image("explode3", "./public/items/explode3.png");
+    this.load.image("explode4", "./public/items/explode4.png");
+    this.load.image("explode5", "./public/items/explode5.png");
+    this.load.image("explode6", "./public/items/explode6.png");
+    this.load.image("explode7", "./public/items/explode7.png");
     // otros, items y demás
+    this.load.image("caja", "./public/items/caja.png");
+    this.load.image("fuelItem", "./public/items/fuel.png");
+    this.load.image("powerup", "./public/items/powerup.png");
     this.load.image("road", "./public/items/background.png");
     this.load.image("explosion", "./public/items/explosion.png");
-    this.load.image("fuelItem", "./public/items/fuel.png");
-    this.load.image("caja", "./public/items/caja.png");
-    this.load.image("powerup", "./public/items/powerup.png");
     this.load.image("avionPower", "./public/aviones/avion-power.png");
-
   }
 
   // ACA EMPIEZA EL CREATE
   create() {
-    this.gameIsFrozen = false; // <-- Reinicia el flag al crear la escena
-    this.road = this.add.tileSprite(this.cameras.main.width / 2, this.cameras.main.height / 2, 400, 600, "road");      // DIMENSIONES DEL MAPA
-
-    this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.2 });
+    this.road = this.add.tileSprite(this.cameras.main.width / 2, this.cameras.main.height / 2, 400, 600, "road");      // posicion del fondo
+    this.gameMusic = this.sound.add('gameMusic', { loop: true, volume: 0.2 });                                         // musica de fondo
     this.gameMusic.play();
 
-    this.testKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+    this.testKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);                                       // tecla de prueba para gameover
 
-
-    this.events.on('shutdown', () => {
-      if (this.gameMusic && this.gameMusic.isPlaying) {
+    // metodo para cerrar la musica
+    this.events.on('shutdown', () => {                                                                                 // se ejecuta cuando la escena se cierra
+      if (this.gameMusic && this.gameMusic.isPlaying) {                                                                // si la musica esta sonando, la detiene
         this.gameMusic.stop();
       }
     });
 
-    this.events.on('destroy', () => {
-      if (this.gameMusic && this.gameMusic.isPlaying) {
-        this.gameMusic.stop();
-      }
-    });
+  
 
     // definicion de sonidos en gameplay
     this.sfx = {
