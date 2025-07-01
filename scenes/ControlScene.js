@@ -5,7 +5,7 @@ class ControlScene extends Phaser.Scene {
   }
 
   init(data) {
-    this.music = data.music; // 🎵 recibe la música desde TitleScene
+    this.music = data.music; // recibe la música desde TitleScene
   }
 
   preload() {

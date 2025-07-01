@@ -152,7 +152,8 @@ class GameScene extends Phaser.Scene {
     this.explosions = this.physics.add.group();
     this.powerups = this.physics.add.group();
     this.shipsDestroyed = 0;
-    this.allyPlanes = [];                                     // LISTA DE ACOMPAÑANTES
+    this.allyPlanes = []; // Puedes mantener el array si quieres lógica personalizada
+    this.allyGroup = this.physics.add.group(); // Nuevo grupo para aliados
 
     // intervalo de sprites en disparos
    this.time.addEvent({
@@ -238,10 +239,11 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.fuelItems, this.collectFuel, null, this);
     this.physics.add.overlap(this.player, this.missileCrates, this.collectMissileCrate, null, this);
     this.physics.add.overlap(this.player, this.powerups, this.collectPowerUp, null, this);
-    this.physics.add.overlap(this.allyPlanes, this.bombs, this.hitAlly, null, this);
-    this.physics.add.overlap(this.allyPlanes, this.enemyLasers, this.hitAlly, null, this);
-    this.physics.add.overlap(this.allyPlanes, this.fuelItems, this.collectFuel, null, this);
-    this.physics.add.overlap(this.allyPlanes, this.missileCrates, this.collectMissileCrate, null, this);
+    this.physics.add.overlap(this.allyGroup, this.bombs, this.hitAlly, null, this);
+    this.physics.add.overlap(this.allyGroup, this.enemyLasers, this.hitAlly, null, this);
+    this.physics.add.overlap(this.allyGroup, this.fuelItems, this.collectFuel, null, this);
+    this.physics.add.overlap(this.allyGroup, this.missileCrates, this.collectMissileCrate, null, this);
+    this.physics.add.overlap(this.allyGroup, this.powerups, this.collectPowerUp, null, this);
 
     this.altKeys = this.input.keyboard.addKeys({
       left: Phaser.Input.Keyboard.KeyCodes.J,
@@ -295,7 +297,11 @@ class GameScene extends Phaser.Scene {
     this.fuelText.setText(`${Math.floor(this.fuel)}%`);
     this.scoreText.setText(this.score.toFixed(0).padStart(6, '0'));
 
-    if (this.playerSpeed > 450 && (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + 2500)) {
+    const baseDelay = 2500;
+    const minDelay = 600;
+    const spawnDelay = Math.max(baseDelay - this.score * 0.1, minDelay);
+
+    if (this.playerSpeed > 450 && (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + spawnDelay)) {
       if (this.enemiesGroup.countActive(true) < 8) {
         this.spawnRandomEnemy();
         this.lastEnemyTime = this.time.now;
@@ -306,6 +312,9 @@ class GameScene extends Phaser.Scene {
     this.enemyLasers.children.each(l => l.y > 620 && l.destroy());
     this.missiles.children.each(m => m.y < -20 && m.destroy());
     this.missileCrates.children.each(c => c.y > this.scale.height + 20 && c.destroy());
+
+    // 💡 Limpia powerups que salgan de pantalla
+    this.powerups.children.each(p => p.y > this.scale.height + 20 && p.destroy());
 
     if (this.fuel <= 0) {
       this.scene.start('DeathScene', {
@@ -429,18 +438,25 @@ class GameScene extends Phaser.Scene {
   }
 
   spawnPowerUp() {
-    if (this.playerSpeed < 400) return; // Solo si el jugador va rápido
+    if (this.playerSpeed < 400) return;
     if (this.powerups.countActive(true) >= 1) return;
+
+    // 💡 Esta condición es la clave: solo si hay menos de 2 aviones aliados, creamos el ítem
+    if (this.allyPlanes.length >= 100) return;
+
     const x = Phaser.Math.Between(230, 570);
     const power = this.powerups.create(x, -20, "powerup");
     power.setVelocityY(280);
     power.setScale(0.2);
   }
 
+
+
   // codigo para recolectar powerup
-  collectPowerUp(player, power) {
+  collectPowerUp(entity, power) {
     power.destroy();
     this.sfx.powerup.play();
+
     if (this.allyPlanes.length >= 2) {
       this.score += 1200;
       return;
@@ -448,14 +464,16 @@ class GameScene extends Phaser.Scene {
 
     const offsetX = this.allyPlanes.length === 0 ? 45 : -45;
     const offsetY = 40;
-    const ally = this.physics.add.sprite(player.x + offsetX, player.y + offsetY, "avion-power1");
+    const ally = this.physics.add.sprite(entity.x + offsetX, entity.y + offsetY, "avion-power1");
     ally.setScale(1);
     ally.setCollideWorldBounds(true);
     ally.body.immovable = true;
-    ally.setPushable(false); // ⚠️ evita que empujen al jugador
+    ally.setPushable(false);
     this.allyPlanes.push(ally);
+    this.allyGroup.add(ally); // <-- Agrega al grupo de Phaser
     this.score += 500;
   }
+
 
   // CODIGO PARA RECOLECTAR CAJA MISILES
   collectMissileCrate(entity, crate) {
@@ -643,13 +661,18 @@ class GameScene extends Phaser.Scene {
 
   hitAlly(ally, projectile) {
     projectile.destroy();
+    this.spawnExplosion(ally.x, ally.y, false);
+    this.sfx.explodemini.play();
     ally.destroy();
-    this.allyPlanes = this.allyPlanes.filter(a => a.active); // limpiar la lista
+
+    // 💡 Filtramos usando .active Y .visible para mayor seguridad
+    this.allyGroup.remove(ally, true, true); // Elimina del grupo y destruye el sprite
+    this.allyPlanes = this.allyPlanes.filter(a => a.active && a.visible);
   }
 
   getEnemyFireDelay() {
     // Disparan más rápido con más puntos, pero nunca menos de 600ms
-    return Math.max(2500 - this.score * 0.1, 600);
+    return Math.max(2500 - this.score * 0.15, 600);
   }
 
   showPlayerExplosion(callback) {
