@@ -151,7 +151,7 @@ class GameScene extends Phaser.Scene {
 
     // evento para el powerup
     this.time.addEvent({
-      delay: 60000,                 //tiempo de aparicion en ms (1 minuto)
+      delay: 90000,                 //tiempo de aparicion en ms (1 minuto 30 segundos)
       callback: this.spawnPowerUp,
       callbackScope: this,
       loop: true
@@ -259,18 +259,15 @@ class GameScene extends Phaser.Scene {
     } else {
       this.playerSpeed *= 0.99;
     }
-
     if (Phaser.Input.Keyboard.JustDown(this.keys.X)) this.shootBullet();     // disparo de balas al presionar X
     if (Phaser.Input.Keyboard.JustDown(this.keys.C)) this.shootMissile();    // disparo de misiles al presionar C
-
     const speed = Math.floor(this.playerSpeed).toString().padStart(3, ' ');  // formatea la velocidad del jugador
     this.speedText.setText(`${speed} Km/h`);                                 // actualiza el texto de velocidad
     this.fuelText.setText(`${Math.floor(this.fuel)}%`);                      // actualiza el texto de combustible
     this.scoreText.setText(this.score.toFixed(0).padStart(6, '0'));          // actualiza el texto de score
- 
     const baseDelay = 2500;                                                  // delay base para el spawn de enemigos (2 segundos y medio)
-    const minDelay = 600;                                                    // delay minimo para el spawn de enemigos (0.6 segundos)
-    const spawnDelay = Math.max(baseDelay - this.score * 0.1, minDelay);     // delay de spawn de enemigos basado en el score (va aumentando)
+    const minDelay = 0;                                                    // delay minimo para el spawn de enemigos (0 segundos)
+    const spawnDelay = Math.max(baseDelay - this.score * 0.01, minDelay);    // delay de spawn de enemigos basado en el score (va aumentando)
 
     // spawn de enemigos basado en la velocidad del jugador y el tiempo transcurrido
     if (this.playerSpeed > 450 && (!this.lastEnemyTime || this.time.now > this.lastEnemyTime + spawnDelay)) {
@@ -288,207 +285,195 @@ class GameScene extends Phaser.Scene {
     this.powerups.children.each(p => p.y > this.scale.height + 20 && p.destroy());        // limpia los powerups que salgan de pantalla
     this.missileCrates.children.each(c => c.y > this.scale.height + 20 && c.destroy());   // limpia las cajas de misiles que salgan de pantalla
     this.fuelItems.children.each(f => f.y > this.scale.height + 20 && f.destroy());       // limpia los items de combustible que salgan de pantalla
-
-  
-    if (this.fuel <= 0) {
+    if (this.fuel <= 0) {                       // si el combustible llega a 0, termina el juego
       this.scene.start('DeathScene', {
         score: this.score,
         shipsDestroyed: this.shipsDestroyed
       });
     }
 
+    // actualiza la posicion de los enemigos
     this.enemiesGroup.children.each(enemy => {
-      if (!enemy.active) return;
-      let dir = enemy.getData("dir") ?? (Phaser.Math.Between(0, 1) === 0 ? -1 : 1);
+      if (!enemy.active) return; 
+      let dir = enemy.getData("dir") ?? (Phaser.Math.Between(0, 1) === 0 ? -1 : 1); // obtiene la direccion del enemigo o la asigna aleatoriamente
       enemy.setData("dir", dir);
-
-      // Velocidad lateral progresiva, pero limitada
-      const baseSpeed = 2.5;
-      const extraSpeed = Math.min(this.score * 0.001, 5)
+      // velocidad lateral progresiva, pero limitada
+      const baseSpeed = 2.5;                                     // velocidad base de movimiento lateral
+      const extraSpeed = Math.min(this.score * 0.0005, 500)        // velocidad extra basada en el score, limitada a 5
       const lateralSpeed = baseSpeed + extraSpeed;
-
-      enemy.x += dir * lateralSpeed;
-
-      // Limita el movimiento lateral a la zona superior
-      if (enemy.x < 232) {
-        enemy.x = 232;
-        enemy.setData("dir", 1);
+      enemy.x += dir * lateralSpeed;                             // mueve al enemigo lateralmente
+      // limita el movimiento lateral a la zona superior
+      if (enemy.x < 232) {                                       // si el enemigo sale del limite izquierdo
+        enemy.x = 232;                                           // lo posiciona en el limite izquierdo
+        enemy.setData("dir", 1);                                 // cambia la direccion a derecha
       }
-      if (enemy.x > 564) {
-        enemy.x = 564;
-        enemy.setData("dir", -1);
+      if (enemy.x > 564) {                                       // si el enemigo sale del limite derecho
+        enemy.x = 564;                                           // lo posiciona en el limite derecho
+        enemy.setData("dir", -1);                                // cambia la direccion a izquierda
       }
 
-      // Mantén la Y fija para que no bajen
+      // mantiene la Y fija para que no bajen
       if (enemy.getData("fixedY")) {
         enemy.y = enemy.getData("fixedY");
       }
     });
 
-    // Actualizar imagen del tanque de combustible
-    if (this.fuel > 70) {
+    // actualizar imagen del tanque de combustible
+    if (this.fuel > 70) {                             // si el combustible es mayor o igual a 70, muestra tanque1
       this.tankImage.setTexture("tanque1");
-    } else if (this.fuel > 40) {
+    } else if (this.fuel > 40) {                      // si el combustible es mayor o igual a 40, muestra tanque2
       this.tankImage.setTexture("tanque2");
-    } else if (this.fuel > 10) {
+    } else if (this.fuel > 10) {                      // si el combustible es mayor o igual a 10, muestra tanque3
       this.tankImage.setTexture("tanque3");
-    } else {
+    } else {                                          // si el combustible es menor o igual a 10, muestra tanque4
       this.tankImage.setTexture("tanque4");
     }
-
 
     // movimiento fijo de los aliados en formación
     this.allyPlanes.forEach((ally, i) => {
       if (!ally.active) return;
-      const offsetX = i === 0 ? 50 : -50;
-      const offsetY = 40;
+      const offsetX = i === 0 ? 50 : -50;             // posicion lateral de los aliados respecto al jugador
+      const offsetY = 40;                             // posicion vertical de los aliados respecto al jugador
       ally.x = this.player.x + offsetX;
       ally.y = this.player.y + offsetY;
-
-      
-      const bounds = this.physics.world.bounds;
-      ally.x = Phaser.Math.Clamp(ally.x, bounds.left + 20, bounds.right - 20);
-      ally.y = Phaser.Math.Clamp(ally.y, bounds.top + 20, bounds.bottom - 20);
+      const bounds = this.physics.world.bounds;                                 // obtiene los limites del mundo
+      ally.x = Phaser.Math.Clamp(ally.x, bounds.left + 20, bounds.right - 20);  // limita el movimiento lateral de los aliados
+      ally.y = Phaser.Math.Clamp(ally.y, bounds.top + 20, bounds.bottom - 20);  // limita el movimiento vertical de los aliados
     });
   }
+  // ACA TERMINA EL UPDATE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  shootBullet() {
-    const bulletTexture = this.bulletToggle ? "bullet1" : "bullet2";
+  // codigo para intercambio de sprites de disparo
+  shootBullet() {                                 
+    const bulletTexture = this.bulletToggle ? "bullet1" : "bullet2";  // intercambio de sprites de disparo para jugador
     this.bulletToggle = !this.bulletToggle;
     this.sfx.bullet.play();
     const bullet = this.bullets.create(
       this.player.x,
-      this.player.y - this.player.displayHeight / 2 - 10,
+      this.player.y - this.player.displayHeight / 2 - 10,   // posiciona la bala justo arriba del jugador
       bulletTexture
     );
-    bullet.setVelocityY(-900);
-    bullet.setScale(1.4); // ahora es configurable
+    bullet.setVelocityY(-900);               // velocidad de la bala
+    bullet.setScale(1.4);                    // tamaño de la bala
     this.allyPlanes.forEach(ally => {
       if (!ally.active) return;
-    const bulletTexture = this.bulletToggle ? "bullet1" : "bullet2";
+    const bulletTexture = this.bulletToggle ? "bullet1" : "bullet2";  // intercambio de sprites de disparo para los aliados
     const bullet = this.bullets.create(
       ally.x,
-      ally.y - ally.displayHeight / 2 - 10,
+      ally.y - ally.displayHeight / 2 - 10,                 // posiciona la bala justo arriba del aliado
       bulletTexture
     );
-    bullet.setVelocityY(-900);
-    bullet.setScale(1.4);
+    bullet.setVelocityY(-900);               // velocidad de la bala
+    bullet.setScale(1.4);                    // tamaño de la bala
   });
   }
 
+  // codigo para el disparo de misiles
   shootMissile() {
-    if (this.missilesAvailable <= 0) return;
+    if (this.missilesAvailable <= 0) return;     // si no hay misiles disponibles, no dispara
     this.sfx.misil.play();
-    const missile = this.missiles.create(this.player.x, this.player.y - this.player.displayHeight / 2 - 10, 'missile1');
-    missile.setVelocityY(-700);
-    missile.setScale(2.8);
+    const missile = this.missiles.create(this.player.x, this.player.y - this.player.displayHeight / 2 - 10, 'missile1'); // posiciona el misil justo arriba del jugador
+    missile.setVelocityY(-700);                  // velocidad del misil
+    missile.setScale(2.8);                       // tamaño del misil
     this.missilesAvailable--;
     this.updateMissileText();
   }
 
+  // codigo para actualizar el texto de misiles disponibles
   updateMissileText() {
-    for (let i = 0; i < this.maxMissiles; i++) {
-      this.missileIcons[i].setVisible(i < this.missilesAvailable);
+    for (let i = 0; i < this.maxMissiles; i++) {                    // recorre los iconos de misiles
+      this.missileIcons[i].setVisible(i < this.missilesAvailable);  // muestra los iconos de misiles disponibles
     }
   }
 
-  // SPAWN DEL ITEM CAJA MISILES
+  // spawn del item caja de misiles
   spawnMissileCrate() {
-    if (this.playerSpeed < 400) return; // Solo si el jugador va rápido
-    if (this.missileCrates.countActive(true) >= 2) return;
-    const x = Phaser.Math.Between(230, 570);
-    const crate = this.missileCrates.create(x, -20, "caja");
-    crate.setVelocityY(250);
-    crate.setScale(1.5);
+    if (this.playerSpeed < 400) return; // solo si el jugador esta a mas de 400 km/h
+    const x = Phaser.Math.Between(230, 570);                   // posicion aleatoria entre 230 y 570
+    const crate = this.missileCrates.create(x, -20, "caja");   // crea la caja de misiles
+    crate.setVelocityY(250);                                   // velocidad de caida de la caja de misiles
+    crate.setScale(1.5);                                       // tamaño de la caja de misiles
   }
 
-  // SPAWN DEL ITEM COMBUSTIBLE
+  // spawn del item bidon de combustible
   spawnFuelItem() {
-    if (this.playerSpeed < 400) return; // Solo si el jugador va rápido
-    const x = Phaser.Math.Between(230, 570);
-    const fuel = this.fuelItems.create(x, -20, "fuelItem");
-    fuel.setVelocityY(250);
-    fuel.setScale(1.5);
+    if (this.playerSpeed < 400) return; // solo si el jugador esta a mas de 400 km/h
+    const x = Phaser.Math.Between(230, 570);                   // posicion aleatoria entre 230 y 570
+    const fuel = this.fuelItems.create(x, -20, "fuelItem");    // crea el item de combustible
+    fuel.setVelocityY(250);                                    // velocidad de caida del item de combustible
+    fuel.setScale(1.5);                                        // tamaño del item de combustible
   }
 
+  // spawn del item de powerup
   spawnPowerUp() {
-    if (this.playerSpeed < 400) return;
-    if (this.powerups.countActive(true) >= 1) return;
-
-    // 💡 Esta condición es la clave: solo si hay menos de 2 aviones aliados, creamos el ítem
-    if (this.allyPlanes.length >= 100) return;
-
-    const x = Phaser.Math.Between(230, 570);
-    const power = this.powerups.create(x, -20, "powerup");
-    power.setVelocityY(280);
-    power.setScale(0.2);
+    if (this.playerSpeed < 400) return; // solo si el jugador esta a mas de 400 km/h)
+    const x = Phaser.Math.Between(230, 570);                 // posicion aleatoria entre 230 y 570
+    const power = this.powerups.create(x, -20, "powerup");   // crea el item de powerup
+    power.setVelocityY(280);                                 // velocidad de caida del powerup
+    power.setScale(0.2);                                     // tamaño del powerup
   }
-
-
 
   // codigo para recolectar powerup
-  collectPowerUp(entity, power) {
-    power.destroy();
+  collectPowerUp(entity, power) {        // tanto jugador como aliados pueden recoger powerups
+    power.destroy();                     // se destruye al recojerlo
     this.sfx.powerup.play();
-
     if (this.allyPlanes.length >= 2) {
-      this.score += 1200;
+      this.score += 1200;                // recojerlo da 1200 puntos
       return;
     }
 
-    const offsetX = this.allyPlanes.length === 0 ? 45 : -45;
-    const offsetY = 40;
-    const ally = this.physics.add.sprite(entity.x + offsetX, entity.y + offsetY, "avion-power1");
+    // codigo para agregar un aliado
+    const offsetX = this.allyPlanes.length === 0 ? 45 : -45;  // posicion lateral del aliado respecto al jugador
+    const offsetY = 40;                                       // posicion vertical del aliado respecto al jugador
+    const ally = this.physics.add.sprite(entity.x + offsetX, entity.y + offsetY, "avion-power1"); 
     ally.setScale(1);
-    ally.setCollideWorldBounds(true);
+    ally.setCollideWorldBounds(true);   // evita que el aliado salga de los limites del mundo
     ally.body.immovable = true;
     ally.setPushable(false);
-    this.allyPlanes.push(ally);
-    this.allyGroup.add(ally); // <-- Agrega al grupo de Phaser
-    this.score += 500;
+    this.allyPlanes.push(ally);         // agrega el aliado al array de aliados
+    this.allyGroup.add(ally);           // agrega el aliado al grupo de aliados
+    this.score += 1200;                  // recojerlo da 500 puntos
   }
 
-
-  // CODIGO PARA RECOLECTAR CAJA MISILES
-  collectMissileCrate(entity, crate) {
-    crate.destroy();
+  // codigo para recolectar item de caja de misiles
+  collectMissileCrate(entity, crate) {         // tanto jugador como aliados pueden recoger cajas de misiles
+    crate.destroy();                           // se destruye al recojerla
     this.sfx.itemcaja.play();
-    this.missilesAvailable = this.maxMissiles;
-    this.updateMissileText();
-    this.score += 250;
+    this.missilesAvailable = this.maxMissiles; // recarga los misiles disponibles al maximo
+    this.updateMissileText();                  // actualiza el texto de misiles disponibles
+    this.score += 250;                         // recojerla da 250 puntos
   }
 
-  // CODIGO PARA RECOLECTAR ITEM COMBUSTIBLE
-  collectFuel(entity, fuel) {
-    fuel.destroy();
+  // codigo para recolectar item de combustible
+  collectFuel(entity, fuel) {                  // tanto jugador como aliados pueden recoger items de combustible
+    fuel.destroy();                            // se destruye al recojerlo
     this.sfx.itemfuel.play();
-    this.fuel = Math.min(this.fuel + 25, 100);
-    this.score += 250;
+    this.fuel = Math.min(this.fuel + 30, 100); // recarga 30 de combustible hasta un maximo de 100
+    this.score += 250;                         // recojerlo da 250 puntos
   }
 
-  // DURACION DE LA EXPLOSION
-  spawnExplosion(x, y, contagious = false) {
-    const explosion = this.explosions.create(x, y, "explode1");
-    explosion.setScale(contagious ? 2.5 : 1.2); // grande para misil, chica para bala
+  // spawn de la explosion pequeña o grande
+  spawnExplosion(x, y, contagious = false) {                     // no es contagiosa para balas, si lo es para misiles
+    const explosion = this.explosions.create(x, y, "explode1");  // crea la explosion desde explode1
+    explosion.setScale(contagious ? 2.5 : 1.2);                  // escala de la explosion, mas grande si es contagiosa
     explosion.setAlpha(0.9);
-    explosion.setData('contagious', contagious);
+    explosion.setData('contagious', contagious);                 // marca si la explosion es contagiosa o no
 
-    // Animación manual
-    let frame = 1;
-    const frameRate = 110;
-    const maxFrames = 6; // solo 1,2,3 para visual
+    // animacion manual
+    let frame = 1;                                   // contador de frames para la animacion
+    const frameRate = 110;                           // velocidad de cambio de frames en ms
+    const maxFrames = 6;                             // numero maximo de frames de la animacion (explode1 a explode6)
     const animationTimer = this.time.addEvent({
       delay: frameRate,
       callback: () => {
         if (!explosion.active) return;
         frame++;
-        if (frame > maxFrames) frame = 1;
+        if (frame > maxFrames) frame = 1;            // vuelve al primer frame si ya paso el ultimo
         explosion.setTexture(`explode${frame}`);
       },
       loop: true
     });
-
-    const explosionDuration = contagious ? 2000 : 600; // más corta para visual
+    const explosionDuration = contagious ? 2000 : 600; // duracion de la explosion, mas larga si es contagiosa
     this.time.delayedCall(explosionDuration, () => {
       if (explosion.active) {
         explosion.destroy();
@@ -497,46 +482,47 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  // spawn de enemigos aleatorios
   spawnRandomEnemy() {
-    const x = Phaser.Math.Between(230, 540);
-    const type = Phaser.Math.Between(0, 1) === 0 ? "cargo" : "hunter";
-    if (type === "cargo" && this.enemiesGroup.countActive(true) < 8) this.spawnCargoEnemy(x, -60);
-    else if (type === "hunter" && this.enemiesGroup.countActive(true) < 8) this.spawnHunterEnemy(x, -60);
+    const x = Phaser.Math.Between(230, 540);                             // posicion aleatoria entre 230 y 540
+    const type = Phaser.Math.Between(0, 1) === 0 ? "cargo" : "hunter";   // tipo de enemigo aleatorio, 50% cargo y 50% hunter
+    if (type === "cargo" && this.enemiesGroup.countActive(true) < 8) this.spawnCargoEnemy(x, -60); // si hay menos de 8 enemigos activos, spawnea un carguero
+    else if (type === "hunter" && this.enemiesGroup.countActive(true) < 8) this.spawnHunterEnemy(x, -60); // si hay menos de 8 enemigos activos, spawnea un cazador
   }
 
+  // spawn de carguero (CARGO)
   spawnCargoEnemy(x, y) {
     const ship = this.enemiesGroup.create(x, y, "cargo1");
-    ship.setVelocityY(250);
-    ship.setData("type", "cargo");
-    ship.setData("life", 5);
+    ship.setVelocityY(250);             // posicion en linea Y de ubicacion del carguero
+    ship.setData("type", "cargo");      // tipo de enemigo cargo
+    ship.setData("life", 5);            // vida del carguero (5 golpes)
     ship.setData("wasScored", false);
     ship.setScale(1);
     this.time.delayedCall(1000, () => {
       if (!ship.active) return;
       ship.setVelocityY(0);
       ship.body.moves = false;
-      // Fijar la posición Y para que no bajen más
-      ship.setData("fixedY", ship.y);
+      ship.setData("fixedY", ship.y);        // fijar la posición Y para que no bajen más
       ship.bombTimer = this.time.addEvent({
-        delay: this.getEnemyFireDelay(),
+        delay: this.getEnemyFireDelay(),     // tiempo de disparos basado en puntuacion
         callback: () => {
           if (!ship.active) return;
           this.sfx.lasermini.play();
           const bomb = this.bombs.create(ship.x, ship.y + 40, "bomb1");
-          bomb.setVelocityY(450);
+          bomb.setVelocityY(450);            // velocidad de caida de la bomba
           bomb.setTexture("bomb1");
-          bomb.setScale(2.8);
+          bomb.setScale(2.8);                // escala de la bomba, mucho mas grande que la imagen base
         },
         loop: true
       });
     });
   }
-
+  // spawn de cazador (HUNTER)
   spawnHunterEnemy(x, y) {
     const ship = this.enemiesGroup.create(x, y, "hunter1");
-    ship.setVelocityY(140);
-    ship.setData("type", "hunter");
-    ship.setData("life", 7);
+    ship.setVelocityY(140);                   // posicion en linea Y de ubicacion del cazador
+    ship.setData("type", "hunter");           // tipo de enemigo hunter
+    ship.setData("life", 7);                  // vida del hunter (7 golpes)
     ship.setData("wasScored", false);
     ship.setScale(1.3);
     this.time.delayedCall(1000, () => {
@@ -544,15 +530,14 @@ class GameScene extends Phaser.Scene {
       ship.setVelocityY(0);
       ship.body.allowGravity = false;
       ship.body.immovable = true;
-      // Fijar la posición Y para que no bajen más
-      ship.setData("fixedY", ship.y);
+      ship.setData("fixedY", ship.y);         // fijar la posición Y para que no bajen más
       ship.laserTimer = this.time.addEvent({
-        delay: this.getEnemyFireDelay(),
+        delay: this.getEnemyFireDelay(),      // tiempo de disparos basado en puntuacion
         callback: () => {
           if (!ship.active) return;
           this.sfx.lasermax.play();
           const laser = this.enemyLasers.create(ship.x, ship.y + 40, "laser1");
-          laser.setVelocityY(450);
+          laser.setVelocityY(450);            // velocidad de caida del laser
           laser.setTexture("laser1");
           laser.setScale(2);
         },
@@ -561,70 +546,69 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  // sistema de puntos por naves destruidas
   scoreEnemy(enemy, value) {
     if (!enemy.getData("wasScored")) {
-      this.score += value;
-      enemy.setData("wasScored", true);
+      this.score += value;                // suma de los puntos
+      enemy.setData("wasScored", true);   // se asegura de que solo sume una vez
     }
   }
 
+  // comportamiento de balas golpeando enemigos
   hitEnemy(bullet, enemy) {
-    bullet.destroy();
-    let hp = enemy.getData("life") - 1;
-    if (hp <= 0) {
-      this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 100);
+    bullet.destroy();                     // al golpear, la bala se destruye
+    let hp = enemy.getData("life") - 1;   // resta 1 de vida a la nave golpeada
+    if (hp <= 0) {                        // si la vida llega a 0, entonces ...
+      this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 400);
       this.shipsDestroyed++;
-      this.spawnExplosion(enemy.x, enemy.y, false); // pequeña, NO contagiosa
-      enemy.destroy();
+      this.spawnExplosion(enemy.x, enemy.y, false); // explosion pequeña, NO contagiosa
+      enemy.destroy();                              // el enemigo desaparece
       this.sfx.explodemini.play();
     } else {
       enemy.setData("life", hp);
       const type = enemy.getData("type");
-      const stage = (type === "cargo") ? 6 - hp : 8 - hp;
+      const stage = (type === "cargo") ? 6 - hp : 8 - hp;    // cambia de textura segun la vida restante
       enemy.setTexture(type === "cargo" ? `cargo${stage}` : `hunter${stage}`);
     }
   }
 
+  // comportamiento de misiles golpeando enemigos
   hitWithMissile(missile, enemy) {
     missile.destroy();
     this.sfx.explodemax.play();
     this.spawnExplosion(enemy.x, enemy.y, true); // grande, contagiosa
     if (enemy.active) {
-      this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 500);
-      this.shipsDestroyed++;
+      this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 300 : 500); // puntaje por destruir enemigo
+      this.shipsDestroyed++;                                                 // contador de naves destruidas
       enemy.destroy();
     }
   }
 
+  // comportamiento de explosiones golpeando enemigos
   hitByExplosion(explosion, enemy) {
     if (!enemy.active) return;
-    if (explosion.getData('contagious')) {
-      this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 200 : 100);
-      this.shipsDestroyed++;
-      this.spawnExplosion(enemy.x, enemy.y, false); // solo visual
+    if (explosion.getData('contagious')) {                                    // la explosion es contagiosa
+      this.scoreEnemy(enemy, enemy.getData("type") === "cargo" ? 100 : 200);  // puntaje por destruir enemigo
+      this.shipsDestroyed++;                                                  // contador de naves destruidas
+      this.spawnExplosion(enemy.x, enemy.y, false);                           // genera explosion pequeña, NO contagiosa
       enemy.destroy();
       this.sfx.explodemini.play();
     }
   }
 
+  // jugador golpeado por ataque enemigo 
   hitPlayer(player, projectile) {
     projectile.destroy();
-
-    if (this.gameMusic && this.gameMusic.isPlaying) {
+    if (this.gameMusic && this.gameMusic.isPlaying) {       // si la musica esta sonando, la detiene
       this.gameMusic.stop();
     }
-
-    this.gameIsFrozen = true;
-
-    // Detener los timers de disparo de todos los enemigos
-    this.enemiesGroup.children.each(enemy => {
+    this.gameIsFrozen = true;                               // congela el juego para evitar mas acciones
+    this.enemiesGroup.children.each(enemy => {              // pausa los timers de los enemigos
       if (enemy.bombTimer) enemy.bombTimer.paused = true;
       if (enemy.laserTimer) enemy.laserTimer.paused = true;
     });
-
     this.sfx.explodemax.play();
-
-    this.showPlayerExplosion(() => {
+    this.showPlayerExplosion(() => {     // muestra la explosion del jugador y luego inicia la escena de GameOver
       this.scene.start('DeathScene', {
         score: this.score,
         shipsDestroyed: this.shipsDestroyed
@@ -632,35 +616,29 @@ class GameScene extends Phaser.Scene {
     });
   }
 
-
+  // aliado golpeado por ataque enemigo
   hitAlly(ally, projectile) {
     projectile.destroy();
-    this.spawnExplosion(ally.x, ally.y, false);
+    this.spawnExplosion(ally.x, ally.y, false);   // genera explosion pequeña, NO contagiosa
     this.sfx.explodemini.play();
     ally.destroy();
-
-    // 💡 Filtramos usando .active Y .visible para mayor seguridad
-    this.allyGroup.remove(ally, true, true); // Elimina del grupo y destruye el sprite
+    this.allyGroup.remove(ally, true, true);      // elimina el aliado del grupo y del array
     this.allyPlanes = this.allyPlanes.filter(a => a.active && a.visible);
   }
 
+  // disparo enemigo más rápido con más puntos
   getEnemyFireDelay() {
-    // Disparan más rápido con más puntos, pero nunca menos de 600ms
-    return Math.max(2500 - this.score * 0.15, 600);
+    return Math.max(2500 - this.score * 0.06, 300); // tiempo de disparos basado en puntuacion, minimo 300ms
   }
 
+  // muestra la explosion del jugador y luego llama al callback
   showPlayerExplosion(callback) {
-    // Oculta el sprite del jugador
-    this.player.setVisible(false);
-
-    // Crea la explosión grande en la posición del jugador
+    this.player.setVisible(false);     // oculta al jugador para crear la explosion
     const explosion = this.add.sprite(this.player.x, this.player.y, "explode1").setScale(2.5).setAlpha(0.95);
-
-    // Animación lenta: cambia de frame cada 300ms
     let frame = 1;
     const maxFrames = 6;
     const frameRate = 300;
-    const animationTimer = this.time.addEvent({
+    const animationTimer = this.time.addEvent({  // animacion mas lenta para la explosion del jugador
       delay: frameRate,
       repeat: maxFrames - 1,
       callback: () => {
@@ -669,12 +647,10 @@ class GameScene extends Phaser.Scene {
         explosion.setTexture(`explode${frame}`);
       }
     });
-
-    // Cuando termine la animación, destruye la explosión y llama al callback
     this.time.delayedCall(frameRate * maxFrames + 200, () => {
       explosion.destroy();
       if (callback) callback();
     });
   }
 }
-export default GameScene;
+export default GameScene; // exporta la clase GameScene para que pueda ser utilizada en otras partes del juego
